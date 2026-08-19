@@ -20,7 +20,7 @@ preparado para ser desplegado como microservicios independientes vía
 Módulos:
 
 | Módulo | Responsabilidad |
-| --- | --- |
+|---|---|
 | `tracking` | Seguimiento de productos fabricante → cliente final |
 | `logistics` | Optimización de rutas y almacenamiento |
 | `forecasting` | Predicción de demanda (análisis predictivo) |
@@ -47,18 +47,35 @@ src/<modulo>/
 
 ## Patrones GoF planeados (mínimo 8, ≥2 por categoría)
 
-| Categoría | Patrón | Módulo / uso previsto |
-| --- | --- | --- |
-| Creacional | Factory Method | Creación de eventos de tracking según tipo de sensor/etapa |
-| Creacional | Builder | Construcción de rutas de distribución complejas |
-| Estructural | Adapter | Integración con dispositivos IoT de distintos fabricantes |
-| Estructural | Decorator | Enriquecimiento de reportes de predicción de demanda |
-| Comportamiento | Strategy | Algoritmos de optimización de rutas intercambiables |
-| Comportamiento | Observer | Notificación en tiempo real de eventos IoT/tracking |
-| Comportamiento | Command | Operaciones sobre inventario/almacenamiento |
-| Comportamiento | Chain of Responsibility | Validación de eventos de la cadena de suministro |
+Repartidos por dueño de módulo: cada integrante es responsable de 2 módulos
+completos (dominio, aplicación, infraestructura, interfaces, pruebas y
+documentación de esos módulos).
+
+| Categoría | Patrón | Módulo | Uso previsto | Responsable |
+|---|---|---|---|---|
+| Creacional | Builder | `logistics` | Construcción de rutas de distribución complejas | Brayan Martínez |
+| Creacional | Factory Method | `tracking` | Creación de eventos de tracking según tipo de sensor/etapa | Julián Niño |
+| Estructural | Adapter | `iot` | Integración con dispositivos IoT de distintos fabricantes | Brayan Martínez |
+| Estructural | Decorator | `forecasting` | Enriquecimiento de reportes de predicción de demanda | Julián Niño |
+| Comportamiento | Strategy | `logistics` | Algoritmos de optimización de rutas intercambiables | Brayan Martínez |
+| Comportamiento | Observer | `iot` | Notificación en tiempo real de eventos IoT | Brayan Martínez |
+| Comportamiento | Chain of Responsibility | `tracking` | Validación de eventos de la cadena de suministro | Julián Niño |
+| Comportamiento | Command | `forecasting` | Encapsular operaciones de generación/recálculo de pronósticos | Julián Niño |
 
 (Sujeto a ajuste conforme avance el diseño; se documentará en UML y ADRs.)
+
+### Dueños de módulo
+
+| Módulo | Responsable principal |
+|---|---|
+| `logistics` | Brayan Martínez |
+| `iot` | Brayan Martínez |
+| `tracking` | Julián Niño |
+| `forecasting` | Julián Niño |
+
+Cada quien abre sus propias ramas `feature/<modulo>-...` desde `develop` para
+trabajar en sus módulos, pero cualquiera puede hacer PR de revisión sobre el
+módulo del otro.
 
 ## Cómo ejecutar (en construcción)
 
@@ -82,7 +99,10 @@ Este repositorio usa [Conventional Commits](https://www.conventionalcommits.org/
 
 ## Equipo
 
-- (agregar integrantes)
+| Nombre | Módulos a cargo |
+|---|---|
+| Brayan Martínez | `logistics`, `iot` |
+| Julián Niño | `tracking`, `forecasting` |
 
 ## Licencia
 
