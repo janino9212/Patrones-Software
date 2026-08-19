@@ -20,7 +20,7 @@ preparado para ser desplegado como microservicios independientes vía
 Módulos:
 
 | Módulo | Responsabilidad |
-| --- | --- |
+|---|---|
 | `tracking` | Seguimiento de productos fabricante → cliente final |
 | `logistics` | Optimización de rutas y almacenamiento |
 | `forecasting` | Predicción de demanda (análisis predictivo) |
@@ -48,7 +48,7 @@ src/<modulo>/
 ## Patrones GoF planeados (mínimo 8, ≥2 por categoría)
 
 | Categoría | Patrón | Módulo / uso previsto |
-| --- | --- | --- |
+|---|---|---|
 | Creacional | Factory Method | Creación de eventos de tracking según tipo de sensor/etapa |
 | Creacional | Builder | Construcción de rutas de distribución complejas |
 | Estructural | Adapter | Integración con dispositivos IoT de distintos fabricantes |
