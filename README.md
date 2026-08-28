@@ -144,3 +144,23 @@ Content-Type: application/json
 - Reemplazar `FAKE_USER` por persistencia real en PostgreSQL con hash de contraseña.
 - Endpoint de `logout` para invalidar sesión manualmente.
 - Iniciar dominio de `tracking` (Factory Method) y `forecasting` (Command).
+
+---
+
+## Semana 3 — Patrón: Singleton
+
+**Módulo:** `shared` (transversal a `tracking` y `forecasting`)
+**Responsable:** Julián Niño
+
+### Código
+![Clase database] (docs/images/patron_Singleton_Instancia_BD.png)
+![Clase JWTManager](docs/images/patrons_Singleton_Loggin.png)
+
+
+### Prueba de funcionamiento
+![Consola mostrando instancia única](docs/images/patron_Singleton_Prueba_login.png)
+
+### Dónde se implementa
+![Ubicación en la arquitectura hexagonal](docs/images/arquitectura_hexagonal.png)
+
+**Justificación:** se usa para garantizar una única instancia de conexión a BD / configuración JWT, compartida en toda la aplicación sin duplicar recursos.
