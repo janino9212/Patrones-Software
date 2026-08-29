@@ -11,6 +11,28 @@ final, con optimización de rutas y almacenamiento, predicción de demanda
 mediante análisis predictivo, e integración con IoT para monitoreo en
 tiempo real.
 
+## Objetivo general
+
+Diseñar e implementar un sistema de gestión de cadena de suministro (SCM) basado en una arquitectura hexagonal modular, que permita el seguimiento de productos desde el fabricante hasta el cliente final, la optimización de rutas y almacenamiento, la predicción de demanda mediante análisis predictivo y la integración con dispositivos IoT para monitoreo en tiempo real, aplicando patrones de diseño GoF como estrategia de solución a los principales retos de extensibilidad, mantenibilidad y bajo acoplamiento del sistema.
+
+## Objetivos específicos
+
+1. Diseñar la arquitectura hexagonal del sistema, separando claramente dominio, aplicación, infraestructura e interfaces en cada uno de los módulos (`tracking`, `logistics`, `forecasting`, `iot`), de forma que el sistema quede preparado para una eventual migración a microservicios.
+
+2. Implementar el módulo `tracking` para el registro y validación de eventos de seguimiento de productos a lo largo de la cadena de suministro, aplicando los patrones **Factory Method** (creación de eventos según tipo de sensor/etapa) y **Chain of Responsibility** (validación de eventos).
+
+3. Implementar el módulo `logistics` para la optimización de rutas de distribución y almacenamiento, aplicando los patrones **Builder** (construcción de rutas complejas) y **Strategy** (algoritmos de optimización intercambiables).
+
+4. Implementar el módulo `forecasting` para la predicción de demanda mediante análisis predictivo, aplicando los patrones **Decorator** (enriquecimiento de reportes) y **Command** (encapsulamiento de operaciones de generación y recálculo de pronósticos).
+
+5. Implementar el módulo `iot` para la integración con dispositivos de distintos fabricantes y el monitoreo en tiempo real, aplicando los patrones **Adapter** (integración de dispositivos heterogéneos) y **Observer** (notificación de eventos en tiempo real).
+
+6. Centralizar los servicios transversales de conexión a base de datos y autenticación en el módulo `shared`, aplicando el patrón **Singleton** para garantizar una única instancia del motor de base de datos y de la gestión de sesiones/JWT.
+
+7. Garantizar la calidad del software mediante pruebas automatizadas (pytest, cobertura ≥ 80%) e integración continua (GitHub Actions), documentando las decisiones de diseño mediante ADRs y diagramas UML.
+
+8. Contenerizar el sistema (Docker / docker-compose) para facilitar su despliegue y validar su viabilidad como base hacia una futura arquitectura de microservicios.
+
 ## Arquitectura
 
 Monolito modular con **arquitectura hexagonal** por módulo (bounded context),
