@@ -105,8 +105,27 @@ módulo del otro.
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn src.tracking.interfaces.api:app --reload
+cp .env.example .env  # completar DATABASE_URL y JWT_SECRET_KEY reales
+uvicorn src.main:app --reload
 ```
+
+### Configuración (variables de entorno)
+
+La app lee la configuración desde variables de entorno (con `.env` local vía
+`python-dotenv`, que **no** se sube al repo). Ver [`.env.example`](.env.example)
+para el listado completo:
+
+| Variable | Uso | Default si no está definida |
+|---|---|---|
+| `DATABASE_URL` | Connection string de Postgres (local o en la nube, p.ej. Neon) | Postgres local (`localhost:5432/scm_db`) |
+| `JWT_SECRET_KEY` | Clave para firmar/verificar los JWT | Clave de desarrollo, **no usar en producción** |
+| `JWT_ALGORITHM` | Algoritmo de firma JWT | `HS256` |
+| `JWT_EXPIRE_MINUTES` | Minutos de expiración del token | `60` |
+
+Para usar una base de datos en la nube (Neon, Supabase, etc.) en vez de una
+instalación local de Postgres, solo hay que definir `DATABASE_URL` en el
+`.env` con la connection string que entregue el proveedor — el resto del
+código (Singleton `DatabaseConnection`) no cambia.
 
 ## Pruebas
 

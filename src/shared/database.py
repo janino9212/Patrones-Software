@@ -1,9 +1,20 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+import os
 import threading
 import logging
 
+from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
+
+load_dotenv()
+
 logger = logging.getLogger("scm.database")
+
+# Default solo para desarrollo local sin .env configurado (Postgres local).
+# En producción/nube, definir DATABASE_URL en el entorno o en .env (ver .env.example).
+_DEFAULT_LOCAL_DATABASE_URL = (
+    "postgresql://postgres:password123@localhost:5432/scm_db?client_encoding=utf8"
+)
 
 class DatabaseConnection:
     """Singleton que gestiona la única instancia del engine y sessionmaker."""
@@ -25,7 +36,7 @@ class DatabaseConnection:
         return cls._instance
 
     def _initialize(self):
-        database_url = "postgresql://postgres:password123@localhost:5432/scm_db?client_encoding=utf8"  # mover a variables de entorno
+        database_url = os.getenv("DATABASE_URL", _DEFAULT_LOCAL_DATABASE_URL)
         self._engine = create_engine(database_url)
         self._session_factory = sessionmaker(
             autocommit=False, autoflush=False, bind=self._engine
