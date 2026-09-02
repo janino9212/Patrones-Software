@@ -160,11 +160,13 @@ Uso académico — UTS.
 - Se implementó el patrón **Singleton** (`src/shared/database.py`) para centralizar la creación del `engine` de SQLAlchemy y el `sessionmaker`, garantizando una única instancia thread-safe (con `threading.Lock` y doble chequeo) reutilizada en toda la aplicación.
 - Se agregó el endpoint `GET /health`, que ejecuta una consulta real (`SELECT 1`) contra PostgreSQL para verificar la conexión, en lugar de solo confirmar que el servidor está en pie.
 
-### Autenticación (login)
+### Autenticación (login y registro)
 - Se implementó un endpoint `POST /login` con generación de tokens **JWT**, usando `python-jose`.
 - El manejo de JWT también sigue el patrón **Singleton** (`src/shared/security.py`, clase `JWTManager`), centralizando la configuración (clave secreta, algoritmo, expiración) y el control de sesiones activas por usuario.
 - Se agregó control de sesión duplicada: si un usuario ya tiene un token activo y vigente, un nuevo intento de login devuelve `409 Conflict` en vez de generar un token adicional.
-- Usuario de prueba temporal (`FAKE_USER` en `src/shared/auth.py`), pendiente de reemplazar por una tabla `users` real en PostgreSQL con contraseñas hasheadas.
+- Los usuarios ya se persisten en una tabla real `users` de PostgreSQL (`src/shared/models.py`), con contraseñas hasheadas con `bcrypt` (`src/shared/password_hashing.py`) — ya no se usa el `FAKE_USER` en memoria.
+- Al arrancar la app (`src/main.py`, `lifespan`), se crea la tabla `users` si no existe y se siembra un usuario `admin`/`admin123` si la tabla está vacía, para que las pruebas manuales (Postman, curl) funcionen sin pasos extra.
+- Nuevo endpoint `POST /register` para crear usuarios adicionales (devuelve `409 Conflict` si el username ya existe).
 
 ### Cómo probarlo
 ```bash
@@ -179,11 +181,20 @@ Content-Type: application/json
   "username": "admin",
   "password": "admin123"
 }
+
+# Registrar un usuario nuevo
+POST http://127.0.0.1:8000/register
+Content-Type: application/json
+
+{
+  "username": "nuevo_usuario",
+  "password": "clave123"
+}
 ```
 
 ### Pendiente
-- Reemplazar `FAKE_USER` por persistencia real en PostgreSQL con hash de contraseña.
 - Endpoint de `logout` para invalidar sesión manualmente.
+- Frontend separado (fuera de este backend) con diseño UX/UI, a construir después.
 - Iniciar dominio de `tracking` (Factory Method) y `forecasting` (Command).
 
 ---
