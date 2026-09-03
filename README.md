@@ -195,7 +195,71 @@ Content-Type: application/json
 ### Pendiente
 - Endpoint de `logout` para invalidar sesión manualmente.
 - Frontend separado (fuera de este backend) con diseño UX/UI, a construir después.
-- Iniciar dominio de `tracking` (Factory Method) y `forecasting` (Command).
+- Iniciar dominio de `forecasting` (Command).
+
+---
+
+## Módulo `tracking` — Patrón: Factory Method
+
+**Responsable habitual del módulo:** Julián Niño (ver tabla de dueños de módulo).
+
+Implementa el registro de eventos de seguimiento de productos en la cadena
+de suministro, usando **Factory Method** para decidir qué tipo de evento
+construir según el dato recibido (sensor IoT o cambio de etapa), tal como
+lo pide el objetivo específico del módulo.
+
+### Diseño
+- `src/tracking/domain/entities.py`: `TrackingEvent` (base) y los productos
+  concretos `SensorTrackingEvent` / `StageChangeTrackingEvent`.
+- `src/tracking/domain/event_factory.py`: `TrackingEventCreator` (Creator
+  abstracto) con `SensorEventCreator` y `StageChangeEventCreator` como
+  subclases concretas — el patrón Factory Method en sí.
+- `src/tracking/application/register_event.py`: caso de uso que resuelve el
+  Creator adecuado y persiste el evento a través de un puerto de repositorio.
+- `src/tracking/infrastructure/`: adaptador SQLAlchemy (`tracking_events`)
+  que reutiliza la sesión de `get_db()` — es decir, el engine único de
+  `DatabaseConnection` (Singleton) de `src/shared`. El Factory Method **no**
+  crea su propia conexión ni se implementa como Singleton: son patrones
+  distintos y se mantienen separados a propósito.
+- `src/tracking/interfaces/api.py`: `POST /tracking/events` y
+  `GET /tracking/events/{product_id}`.
+
+### Cómo probarlo
+```bash
+# Evento de sensor
+POST http://127.0.0.1:8000/tracking/events
+Content-Type: application/json
+
+{
+  "event_type": "sensor",
+  "product_id": "PROD-001",
+  "stage": "transporte",
+  "sensor_type": "temperatura",
+  "reading_value": 4.5,
+  "unit": "C"
+}
+
+# Evento de cambio de etapa
+POST http://127.0.0.1:8000/tracking/events
+Content-Type: application/json
+
+{
+  "event_type": "stage_change",
+  "product_id": "PROD-001",
+  "stage": "entrega",
+  "previous_stage": "transporte",
+  "responsible": "Transportista X"
+}
+
+# Historial de eventos de un producto
+GET http://127.0.0.1:8000/tracking/events/PROD-001
+```
+
+### Pendiente
+- Chain of Responsibility para validar los eventos antes de guardarlos
+  (siguiente patrón planeado para este módulo).
+- Los endpoints de tracking todavía no exigen JWT (igual que el resto de
+  la API por ahora).
 
 ---
 

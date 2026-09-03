@@ -13,6 +13,7 @@ from src.shared.health import router as health_router
 from src.shared.models import Base
 from src.shared.password_hashing import hash_password
 from src.shared.user_repository import create_user, get_user_by_username
+from src.tracking.interfaces.api import router as tracking_router
 
 logger = logging.getLogger("scm.startup")
 
@@ -45,6 +46,7 @@ app = FastAPI(title="SCM - Sistema de Gestión de Cadena de Suministro", lifespa
 
 app.include_router(health_router, tags=["health"])
 app.include_router(auth_router, tags=["auth"])
+app.include_router(tracking_router)
 
 
 @app.get("/")
