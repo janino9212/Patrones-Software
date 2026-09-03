@@ -1,6 +1,15 @@
+import os
 import threading
 from datetime import datetime, timedelta, timezone
+
+from dotenv import load_dotenv
 from jose import jwt, JWTError
+
+load_dotenv()
+
+# Default solo para desarrollo local sin .env configurado.
+# En producción/nube, definir JWT_SECRET_KEY en el entorno o en .env (ver .env.example).
+_DEFAULT_LOCAL_SECRET_KEY = "clave-super-secreta-solo-para-desarrollo-local"
 
 
 class JWTManager:
@@ -23,9 +32,9 @@ class JWTManager:
         return cls._instance
 
     def _initialize(self):
-        self._secret_key = "clave-super-secreta"  # mover a variable de entorno más adelante
-        self._algorithm = "HS256"
-        self._expire_minutes = 60
+        self._secret_key = os.getenv("JWT_SECRET_KEY", _DEFAULT_LOCAL_SECRET_KEY)
+        self._algorithm = os.getenv("JWT_ALGORITHM", "HS256")
+        self._expire_minutes = int(os.getenv("JWT_EXPIRE_MINUTES", "60"))
         self._active_tokens: dict[str, str] = {}  # username -> token activo
 
     def create_access_token(self, username: str) -> str:
