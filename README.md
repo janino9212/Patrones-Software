@@ -291,15 +291,15 @@ GET http://127.0.0.1:8000/tracking/events/PROD-001
 - El **Abstract Factory** resuelve un problema distinto: el **procesamiento** del evento ya creado — construye una familia coherente de dos componentes (`validador` + `notificador`) según ese mismo tipo de evento, sin duplicar ni interferir con el Factory Method existente.
 
 ### Código
-![Puertos del Abstract Factory](docs/images/semana-abstract-factory/puertos.png)
-![Familias concretas (sensor y stage_change)](docs/images/semana-abstract-factory/familias.png)
-![Registro selector de fábricas](docs/images/semana-abstract-factory/registro.png)
-![Registro selector de fábricas](docs/images/semana-abstract-factory/Registro-Evento.png)
+![Puertos del Abstract Factory](docs/images/semana-4/puertos.png)
+![Familias concretas (sensor y stage_change)](docs/images/semana-4/familias.png)
+![Registro selector de fábricas](docs/images/semana-4/registro.png)
+![Registro selector de fábricas](docs/images/semana-4/Registro-Evento.png)
 
 ### Prueba de funcionamiento
-![Consola mostrando familia seleccionada y notificación generada](docs/images/semana-abstract-factory/prueba-consola.png)
-![Postman: evento tipo sensor registrado correctamente](docs/images/semana-abstract-factory/postman-sensor.png)
-![Postman: error 400 por validación de negocio (temperatura fuera de rango)](docs/images/semana-abstract-factory/postman-error-validacion.png)
+![Consola mostrando familia seleccionada y notificación generada](docs/images/semana-4/prueba-consola.png)
+![Postman: evento tipo sensor registrado correctamente](docs/images/semana-4/postman-sensor.png)
+![Postman: error 400 por validación de negocio (temperatura fuera de rango)](docs/images/semana-4/postman-error-validacion.png)
 
 ### Dónde se implementa
 - **Puertos:** `src/tracking/domain/processing_ports.py`
