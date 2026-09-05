@@ -269,7 +269,7 @@ GET http://127.0.0.1:8000/tracking/events/PROD-001
 **Responsable:** Julián Niño
 
 ### Código
-![Clase database] (docs/images/patron_Singleton_Instancia_BD.png)
+![Clase database](docs/images/patron_Singleton_Instancia_BD.png)
 ![Clase JWTManager](docs/images/patrons_Singleton_Loggin.png)
 
 
@@ -283,7 +283,7 @@ GET http://127.0.0.1:8000/tracking/events/PROD-001
 
 
 ---
-
+## Semana 4
 ## Registro de avances — Módulo `tracking` (Abstract Factory)
 
 ### Contexto
@@ -291,14 +291,27 @@ GET http://127.0.0.1:8000/tracking/events/PROD-001
 - El **Abstract Factory** resuelve un problema distinto: el **procesamiento** del evento ya creado — construye una familia coherente de dos componentes (`validador` + `notificador`) según ese mismo tipo de evento, sin duplicar ni interferir con el Factory Method existente.
 
 ### Código
-![Puertos del Abstract Factory](docs/images/semana-abstract-factory/puertos.png)
-![Familias concretas (sensor y stage_change)](docs/images/semana-abstract-factory/familias.png)
-![Registro selector de fábricas](docs/images/semana-abstract-factory/registro.png)
+CLASE ABSCTRAC FACTORY
+![Puertos del Abstract Factory](docs/images/semana-4/puertos.png)
+
+FAMILIA DE PROCESOS
+![Familias concretas (sensor y stage_change)](docs/images/semana-4/familias.png)
+
+FACTORIES (SELECTOR)
+![Registro selector de fábricas](docs/images/semana-4/registro.png)
+
+REGISTRO EVENTO
+![Registro selector de fábricas](docs/images/semana-4/Registro-Evento.png)
 
 ### Prueba de funcionamiento
-![Consola mostrando familia seleccionada y notificación generada](docs/images/semana-abstract-factory/prueba-consola.png)
-![Postman: evento tipo sensor registrado correctamente](docs/images/semana-abstract-factory/postman-sensor.png)
-![Postman: error 400 por validación de negocio (temperatura fuera de rango)](docs/images/semana-abstract-factory/postman-error-validacion.png)
+
+PRUEBA DE LOGS EN CONSOLA
+![Consola mostrando familia seleccionada y notificación generada](docs/images/semana-4/prueba-consola.png)
+
+EJECUCIONES  EN POSTMAN
+![Postman: evento tipo sensor registrado correctamente](docs/images/semana-4/postman-sensor.png)
+
+![Postman: error 400 por validación de negocio (temperatura fuera de rango)](docs/images/semana-4/postman-error-validacion.png)
 
 ### Dónde se implementa
 - **Puertos:** `src/tracking/domain/processing_ports.py`
