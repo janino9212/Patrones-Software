@@ -313,6 +313,8 @@ EJECUCIONES  EN POSTMAN
 
 ![Postman: error 400 por validación de negocio (temperatura fuera de rango)](docs/images/semana-4/postman-error-validacion.png)
 
+### Video explicativo
+[Ver sustentación en video](https://youtu.be/NaDLKI6nF7g)
 ### Dónde se implementa
 - **Puertos:** `src/tracking/domain/processing_ports.py`
 - **Familias concretas:** `src/tracking/infrastructure/factories/`
