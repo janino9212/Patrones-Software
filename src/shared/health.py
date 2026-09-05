@@ -1,14 +1,15 @@
-"""Utilidades compartidas entre módulos.
 
-Este archivo existe desde el primer commit únicamente para validar que
-el pipeline de CI (instalación de dependencias + pytest + cobertura)
-funciona correctamente desde el inicio del proyecto.
-"""
+from fastapi import APIRouter, Depends
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+from src.shared.database import get_db
 
+router = APIRouter()
 
-def system_status() -> dict:
-    """Retorna el estado básico del sistema.
-
-    Sirve como smoke test inicial del pipeline de CI/CD.
-    """
-    return {"status": "ok", "system": "SCM - Cadena de Suministro"}
+@router.get("/health")
+def health_check(db: Session = Depends(get_db)):
+    try:
+        db.execute(text("SELECT 1"))
+        return {"status": "ok", "database": "connected"}
+    except Exception as e:
+        return {"status": "error", "database": "disconnected", "detail": str(e)}
