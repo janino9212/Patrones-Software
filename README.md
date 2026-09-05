@@ -283,7 +283,7 @@ GET http://127.0.0.1:8000/tracking/events/PROD-001
 
 
 ---
-
+## Semana 4
 ## Registro de avances — Módulo `tracking` (Abstract Factory)
 
 ### Contexto
@@ -294,6 +294,7 @@ GET http://127.0.0.1:8000/tracking/events/PROD-001
 ![Puertos del Abstract Factory](docs/images/semana-abstract-factory/puertos.png)
 ![Familias concretas (sensor y stage_change)](docs/images/semana-abstract-factory/familias.png)
 ![Registro selector de fábricas](docs/images/semana-abstract-factory/registro.png)
+![Registro selector de fábricas](docs/images/semana-abstract-factory/Registro-Evento.png)
 
 ### Prueba de funcionamiento
 ![Consola mostrando familia seleccionada y notificación generada](docs/images/semana-abstract-factory/prueba-consola.png)
