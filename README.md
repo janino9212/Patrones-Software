@@ -280,3 +280,63 @@ GET http://127.0.0.1:8000/tracking/events/PROD-001
 ![Ubicación en la arquitectura hexagonal](docs/images/arquitectura_hexagonal.png)
 
 **Justificación:** se usa para garantizar una única instancia de conexión a BD / configuración JWT, compartida en toda la aplicación sin duplicar recursos.
+
+
+---
+
+## Registro de avances — Módulo `tracking` (Abstract Factory)
+
+### Contexto
+- El **Factory Method** (implementado por el compañero de módulo) resuelve la **creación** del `TrackingEvent` según su tipo (`sensor` o `stage_change`).
+- El **Abstract Factory** resuelve un problema distinto: el **procesamiento** del evento ya creado — construye una familia coherente de dos componentes (`validador` + `notificador`) según ese mismo tipo de evento, sin duplicar ni interferir con el Factory Method existente.
+
+### Código
+![Puertos del Abstract Factory](docs/images/semana-abstract-factory/puertos.png)
+![Familias concretas (sensor y stage_change)](docs/images/semana-abstract-factory/familias.png)
+![Registro selector de fábricas](docs/images/semana-abstract-factory/registro.png)
+
+### Prueba de funcionamiento
+![Consola mostrando familia seleccionada y notificación generada](docs/images/semana-abstract-factory/prueba-consola.png)
+![Postman: evento tipo sensor registrado correctamente](docs/images/semana-abstract-factory/postman-sensor.png)
+![Postman: error 400 por validación de negocio (temperatura fuera de rango)](docs/images/semana-abstract-factory/postman-error-validacion.png)
+
+### Dónde se implementa
+- **Puertos:** `src/tracking/domain/processing_ports.py`
+- **Familias concretas:** `src/tracking/infrastructure/factories/`
+- **Registro/selector:** `src/tracking/application/processing_factory_registry.py`
+- **Integración:** `src/tracking/application/register_event.py`
+
+### Cómo probarlo
+```bash
+POST http://127.0.0.1:8000/tracking/events
+Content-Type: application/json
+
+{
+  "event_type": "sensor",
+  "product_id": "PROD-001",
+  "stage": "transporte",
+  "sensor_type": "temperatura",
+  "reading_value": 23.5,
+  "unit": "°C"
+}
+```
+
+```bash
+POST http://127.0.0.1:8000/tracking/events
+Content-Type: application/json
+
+{
+  "event_type": "stage_change",
+  "product_id": "PROD-001",
+  "stage": "transporte",
+  "previous_stage": "fabricacion",
+  "responsible": "Julian Nino"
+}
+```
+
+### Justificación del patrón
+Se usa Abstract Factory porque, para cada tipo de evento de tracking, el validador y el notificador deben ser mutuamente coherentes (por ejemplo, el validador de sensor nunca debe combinarse con el notificador de cambio de etapa). El registro selector permite agregar nuevos tipos de evento sin modificar el código existente, solo registrando una nueva familia concreta.
+
+### Pendiente
+- Endpoints CRUD de `products` para dejar de usar `product_id` "quemado" y consultarlo real desde la base de datos.
+- Validar que el `product_id` exista antes de registrar un evento de tracking.
