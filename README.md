@@ -308,10 +308,9 @@ REGISTRO EVENTO
 PRUEBA DE LOGS EN CONSOLA
 ![Consola mostrando familia seleccionada y notificación generada](docs/images/semana-4/prueba-consola.png)
 
-EJECUCION EXITOSA EN POSTMAN
+EJECUCIONES  EN POSTMAN
 ![Postman: evento tipo sensor registrado correctamente](docs/images/semana-4/postman-sensor.png)
 
-EJECUCION FALLIDA POSTMAN
 ![Postman: error 400 por validación de negocio (temperatura fuera de rango)](docs/images/semana-4/postman-error-validacion.png)
 
 ### Dónde se implementa
