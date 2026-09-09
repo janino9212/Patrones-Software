@@ -7,6 +7,7 @@ logging.basicConfig(
 )
 
 from fastapi import FastAPI
+from src.logistics.interfaces.api import router as logistics_router
 from src.shared.auth import router as auth_router
 from src.shared.database import DatabaseConnection
 from src.shared.health import router as health_router
@@ -47,6 +48,7 @@ app = FastAPI(title="SCM - Sistema de Gestión de Cadena de Suministro", lifespa
 app.include_router(health_router, tags=["health"])
 app.include_router(auth_router, tags=["auth"])
 app.include_router(tracking_router)
+app.include_router(logistics_router)
 
 
 @app.get("/")

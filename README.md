@@ -355,3 +355,86 @@ Se usa Abstract Factory porque, para cada tipo de evento de tracking, el validad
 ### Pendiente
 - Endpoints CRUD de `products` para dejar de usar `product_id` "quemado" y consultarlo real desde la base de datos.
 - Validar que el `product_id` exista antes de registrar un evento de tracking.
+
+---
+
+## Módulo `logistics` — Patrón: Builder (+ Director)
+
+**Responsable:** Brayan Martínez.
+
+Implementa la construcción de rutas de distribución complejas, tal como lo
+pide el objetivo específico del módulo.
+
+### Diseño
+- `src/logistics/domain/entities.py`: `DistributionRoute` (producto,
+  inmutable) y `RouteStop`.
+- `src/logistics/domain/route_builder.py`: `RouteBuilder` (Builder
+  abstracto) y `DistributionRouteBuilder` (concreto) — construcción
+  encadenada (`set_vehicle().set_departure_date().add_stop()...build()`),
+  validando las invariantes mínimas (vehículo, fecha, ≥2 paradas) solo al
+  llamar `build()`.
+- `src/logistics/domain/route_director.py`: `RouteDirector` — conoce
+  "recetas" estándar (`standard`, `express`) y las reproduce sobre
+  cualquier `RouteBuilder`, sin acoplarse a la clase concreta.
+- `src/logistics/application/create_route.py`: caso de uso que elige entre
+  usar el Director (rutas `standard`/`express`) o construir una ruta
+  `custom` a mano con el mismo Builder, y persiste el resultado.
+- `src/logistics/infrastructure/`: adaptador SQLAlchemy (`distribution_routes`)
+  que reutiliza `get_db()` — el engine único de `DatabaseConnection`
+  (Singleton) de `src/shared`. El Builder **no** es Singleton ni crea su
+  propia conexión: son patrones distintos, deliberadamente separados.
+- `src/logistics/interfaces/api.py`: `POST /logistics/routes`,
+  `GET /logistics/routes/{route_id}`, `GET /logistics/routes`.
+
+### Cómo probarlo
+```bash
+# Ruta estándar (Director: vehículo y notas por defecto)
+POST http://127.0.0.1:8000/logistics/routes
+Content-Type: application/json
+
+{
+  "route_type": "standard",
+  "stops": ["Bodega Central", "Cliente A", "Cliente B"],
+  "departure_date": "2026-09-10"
+}
+
+# Ruta express (Director: otro vehículo + notas automáticas)
+POST http://127.0.0.1:8000/logistics/routes
+Content-Type: application/json
+
+{
+  "route_type": "express",
+  "stops": ["Bodega Central", "Cliente A"],
+  "departure_date": "2026-09-10"
+}
+
+# Ruta personalizada (usa el Builder directamente, sin Director)
+POST http://127.0.0.1:8000/logistics/routes
+Content-Type: application/json
+
+{
+  "route_type": "custom",
+  "stops": ["Bodega Central", "Cliente A"],
+  "departure_date": "2026-09-10",
+  "vehicle_type": "furgon_refrigerado",
+  "total_distance_km": 15.3
+}
+
+# Consultar rutas
+GET http://127.0.0.1:8000/logistics/routes
+GET http://127.0.0.1:8000/logistics/routes/{route_id}
+```
+
+### Justificación del patrón
+Una ruta de distribución tiene partes obligatorias (vehículo, fecha,
+paradas) y opcionales (distancia total, notas), y el orden en que se
+agregan no debería importarle a quien la construye. El Builder encapsula
+ese ensamblaje paso a paso y solo valida las invariantes al final
+(`build()`), evitando productos a medio construir. El Director además
+demuestra que se puede reutilizar la misma lógica de construcción para
+distintas "recetas" estándar sin repetir código en cada lugar que crea
+una ruta `standard` o `express`.
+
+### Pendiente
+- Persistir el catálogo real de `vehicle_type` (hoy son strings libres).
+- Validar direcciones/paradas contra un catálogo real en vez de texto libre.
