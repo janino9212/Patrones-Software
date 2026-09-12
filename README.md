@@ -438,3 +438,29 @@ una ruta `standard` o `express`.
 ### Pendiente
 - Persistir el catálogo real de `vehicle_type` (hoy son strings libres).
 - Validar direcciones/paradas contra un catálogo real en vez de texto libre.
+
+### Decisión: no se incluye el patrón Prototype
+
+**Contexto:** de los 5 patrones creacionales del catálogo GoF, el proyecto ya
+implementa 4: Singleton, Factory Method, Abstract Factory y Builder.
+
+**Decisión:** no se incluye Prototype.
+
+**Justificación:**
+- Prototype resuelve la clonación de instancias existentes cuando construirlas
+  desde cero es costoso. En este proyecto, todas las entidades (eventos de
+  tracking, productos, rutas) se construyen a partir de datos de entrada
+  variables en cada solicitud — no existe un caso real de "partir de una
+  instancia base y clonarla con pequeñas variaciones".
+- Los 4 patrones creacionales ya implementados cubren de forma genuina los
+  problemas de creación de objetos presentes en el sistema: instancia única
+  compartida (Singleton), selección de subtipo según dato de entrada (Factory
+  Method), familias de objetos coherentes (Abstract Factory), y construcción
+  paso a paso de objetos complejos (Builder).
+- Agregar Prototype sin un caso de uso genuino añadiría complejidad
+  injustificada al código, contrario al principio de aplicar cada patrón
+  donde resuelve un problema real.
+
+**Alternativa a futuro:** si `logistics` llegara a necesitar generar rutas
+recurrentes a partir de una plantilla base con pequeñas variaciones, Prototype
+sería el candidato natural para esa extensión.
