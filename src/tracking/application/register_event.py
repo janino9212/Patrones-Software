@@ -15,6 +15,15 @@ class RegisterTrackingEventUseCase:
         self._repository = repository
 
     def execute(self, event_type: str, raw_data: dict[str, Any]) -> TrackingEvent:
+        event, _notification = self.execute_with_notification(event_type, raw_data)
+        return event
+
+    def execute_with_notification(
+        self, event_type: str, raw_data: dict[str, Any]
+    ) -> tuple[TrackingEvent, dict]:
+        """Igual que execute(), pero además devuelve la notificación que
+        construyó el Abstract Factory -- la usa src/iot para decidir, vía
+        Bridge, por qué canal despachar la alerta."""
         creator = get_creator(event_type)
         event = creator.create_event(raw_data)
 
@@ -25,4 +34,6 @@ class RegisterTrackingEventUseCase:
         validator.validate(event)
         notification = notifier.build_notification(event)
         print(f"[ABSTRACT FACTORY] Notificación generada: {notification}")
-        return self._repository.save(event)
+
+        saved_event = self._repository.save(event)
+        return saved_event, notification
