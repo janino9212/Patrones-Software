@@ -1,4 +1,11 @@
+import logging
+
 from src.forecasting.domain.forecast_report import ForecastReport
+
+logger = logging.getLogger("scm.forecasting.decorator")
+
+_CONFIDENCE_MARGIN = 0.1
+_MIN_EVENTS_FOR_TREND = 3
 
 
 class ForecastReportDecorator(ForecastReport):
@@ -12,18 +19,18 @@ class ForecastReportDecorator(ForecastReport):
 class ConfidenceIntervalDecorator(ForecastReportDecorator):
     def generate(self) -> dict:
         data = super().generate()
-        margin = data["predicted_demand"] * 0.1
+        margin = data["predicted_demand"] * _CONFIDENCE_MARGIN
         data["confidence_interval"] = [
             round(data["predicted_demand"] - margin, 2),
             round(data["predicted_demand"] + margin, 2),
         ]
-        print(f"[DECORATOR] Intervalo de confianza agregado: {data['confidence_interval']}")
+        logger.info("[DECORATOR] Intervalo de confianza agregado: %s", data["confidence_interval"])
         return data
 
 
 class TrendAnnotationDecorator(ForecastReportDecorator):
     def generate(self) -> dict:
         data = super().generate()
-        data["trend"] = "alza" if data["based_on_events"] >= 3 else "insuficientes datos"
-        print(f"[DECORATOR] Tendencia anotada: {data['trend']}")
+        data["trend"] = "alza" if data["based_on_events"] >= _MIN_EVENTS_FOR_TREND else "insuficientes datos"
+        logger.info("[DECORATOR] Tendencia anotada: %s", data["trend"])
         return data

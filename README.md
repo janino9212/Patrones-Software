@@ -464,3 +464,74 @@ implementa 4: Singleton, Factory Method, Abstract Factory y Builder.
 **Alternativa a futuro:** si `logistics` llegara a necesitar generar rutas
 recurrentes a partir de una plantilla base con pequeñas variaciones, Prototype
 sería el candidato natural para esa extensión.
+
+---
+
+## Semana 5 — Patrones estructurales
+
+Implementados en el commit `91fd5d5` (PR #10, Julián Niño). Los patrones están
+en el código; las pruebas automáticas y esta documentación se agregaron
+después, en la rama `fix/revision-patrones-estructurales`.
+
+### Decorator — `forecasting`
+- `src/forecasting/domain/forecast_report.py`: `ForecastReport` (componente) y
+  `BaseForecastReport` (componente concreto).
+- `src/forecasting/domain/report_decorators.py`: `ConfidenceIntervalDecorator`
+  (intervalo de ±10 %) y `TrendAnnotationDecorator` (`alza` con 3 o más
+  eventos, `insuficientes datos` en caso contrario). Se pueden apilar en
+  cualquier orden.
+- `src/forecasting/application/generate_forecast_report.py`: lee los eventos
+  del producto desde el puerto de `tracking` y arma el reporte decorado.
+- `GET /forecasting/reports/{product_id}`.
+
+> **Nota:** la demanda base es una **estimación simulada** (`nº de eventos × 12.5`),
+> no un modelo predictivo real. Sirve para demostrar el patrón; el modelo real
+> queda pendiente.
+
+### Adapter + Bridge — `iot`
+- **Adapter:** `SensorDataPort` (Target) en `src/iot/domain/`,
+  `VendorATemperatureClient` (Adaptee, simulado) y `VendorATemperatureAdapter`
+  en `src/iot/infrastructure/`. Normaliza el payload del fabricante
+  (`sensorId`/`tempC`) a un `SensorReading` común.
+- **Bridge:** `NotificationDispatcher` (Abstraction: `Urgent...` y `Routine...`)
+  delega el envío en un `NotificationChannel` (Implementor: `MqttChannel` y
+  `WebhookChannel`). La urgencia y el canal varían de forma independiente.
+  El Bridge **no estaba** en la tabla de patrones planeados (tampoco el Composite).
+- `src/iot/application/ingest_sensor_reading.py`: encadena Adapter →
+  Factory Method + Abstract Factory (tracking) → Bridge.
+- `POST /iot/sensors/{vendor}/ingest` con `vendor` = `a` o `a-faulty`
+  (este último simula una lectura de -60 °C, rechazada con `400`).
+
+```bash
+POST http://127.0.0.1:8000/iot/sensors/a/ingest
+Content-Type: application/json
+
+{ "product_id": "PROD-001", "stage": "transporte" }
+```
+
+### Composite — `logistics`
+- `src/logistics/domain/route_component.py` (componente), `route_leaf.py`
+  (`SingleRoute`, hoja) y `route_corridor.py` (`RouteCorridor`, compuesto, que
+  puede contener rutas u otros corredores).
+- `POST /logistics/corridors` agrupa rutas ya creadas y suma su distancia.
+
+```bash
+POST http://127.0.0.1:8000/logistics/corridors
+Content-Type: application/json
+
+{ "name": "Corredor Norte", "route_ids": [1, 2] }
+```
+
+### Cambios de la revisión
+- `tracking`: `SensorEventValidator` ahora rechaza temperaturas menores a
+  -50 con unidad `°C` **o** `C` (antes solo `°C`, con una condición redundante).
+  La regla se aplica por unidad, no por `sensor_type`.
+- `iot`: la clase de despacho urgente se llama `UrgentNotificationDispatcher`;
+  `NotificationDispatcher` es abstracta.
+- Los mensajes de Decorator, Adapter, Bridge y Composite usan `logging` en vez
+  de `print` (los `[ABSTRACT FACTORY]` de la semana 4 siguen usando `print`).
+
+### Pendiente
+- Observer (`iot`), Strategy (`logistics`), Chain of Responsibility
+  (`tracking`) y Command (`forecasting`).
+- Los endpoints nuevos tampoco exigen JWT.

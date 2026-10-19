@@ -1,4 +1,8 @@
+import logging
+
 from src.logistics.domain.route_component import RouteComponent
+
+logger = logging.getLogger("scm.logistics.composite")
 
 
 class RouteCorridor(RouteComponent):
@@ -11,7 +15,10 @@ class RouteCorridor(RouteComponent):
 
     def total_distance_km(self) -> float:
         total = sum(child.total_distance_km() for child in self._children)
-        print(f"[COMPOSITE] Corredor '{self._name}' suma {total} km de {len(self._children)} componentes")
+        logger.info(
+            "[COMPOSITE] Corredor '%s' suma %s km de %d componentes",
+            self._name, total, len(self._children),
+        )
         return total
 
     def describe(self) -> str:

@@ -29,6 +29,7 @@ class RouteResponse(BaseModel):
     total_distance_km: float | None = None
     notes: str | None = None
 
+
 class CorridorRequest(BaseModel):
     name: str
     route_ids: list[int] = Field(min_length=1)

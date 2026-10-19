@@ -1,9 +1,14 @@
+import logging
+
 from src.iot.domain.sensor_adapter_port import SensorDataPort
 from src.iot.domain.sensor_reading import SensorReading
 from src.iot.infrastructure.vendor_clients import (
     VendorAFaultyTemperatureClient,
     VendorATemperatureClient,
 )
+
+
+logger = logging.getLogger("scm.iot.adapter")
 
 
 class VendorATemperatureAdapter(SensorDataPort):
@@ -15,7 +20,7 @@ class VendorATemperatureAdapter(SensorDataPort):
 
     def read(self) -> SensorReading:
         raw = self._client.fetch_reading()
-        print(f"[ADAPTER] Normalizando payload fabricante A: {raw}")
+        logger.info("[ADAPTER] Normalizando payload fabricante A: %s", raw)
         return SensorReading(
             device_id=raw["sensorId"],
             sensor_type="temperatura",

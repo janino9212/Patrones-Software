@@ -4,10 +4,14 @@ from src.tracking.domain.processing_ports import (
 )
 
 
+_CELSIUS_UNITS = ("°C", "C")
+_MIN_PLAUSIBLE_CELSIUS = -50
+
+
 class SensorEventValidator(TrackingEventValidator):
     def validate(self, event: TrackingEvent) -> None:
         assert isinstance(event, SensorTrackingEvent)
-        if event.reading_value < 0 and event.unit == "°C" and event.reading_value < -50:
+        if event.unit in _CELSIUS_UNITS and event.reading_value < _MIN_PLAUSIBLE_CELSIUS:
             raise ValueError("Lectura de temperatura fuera de rango físico plausible")
 
 
