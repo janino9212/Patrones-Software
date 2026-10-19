@@ -15,6 +15,8 @@ from src.shared.models import Base
 from src.shared.password_hashing import hash_password
 from src.shared.user_repository import create_user, get_user_by_username
 from src.tracking.interfaces.api import router as tracking_router
+from src.forecasting.interfaces.api import router as forecasting_router
+from src.iot.interfaces.api import router as iot_router
 
 logger = logging.getLogger("scm.startup")
 
@@ -49,6 +51,8 @@ app.include_router(health_router, tags=["health"])
 app.include_router(auth_router, tags=["auth"])
 app.include_router(tracking_router)
 app.include_router(logistics_router)
+app.include_router(iot_router)
+app.include_router(forecasting_router)
 
 
 @app.get("/")

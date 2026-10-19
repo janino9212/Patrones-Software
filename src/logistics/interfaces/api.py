@@ -10,6 +10,9 @@ from src.logistics.interfaces.schemas import (
     RouteStopResponse,
 )
 from src.shared.database import get_db
+from src.logistics.domain.route_corridor import RouteCorridor
+from src.logistics.domain.route_leaf import SingleRoute
+from src.logistics.interfaces.schemas import CorridorRequest, CorridorResponse  # suma a tus imports de schemas
 
 router = APIRouter(prefix="/logistics", tags=["logistics"])
 
@@ -51,6 +54,20 @@ def get_route(route_id: int, db: Session = Depends(get_db)):
 def list_routes(db: Session = Depends(get_db)):
     repository = SqlDistributionRouteRepository(db)
     return [_to_response(route) for route in repository.list_all()]
+
+@router.post("/corridors", response_model=CorridorResponse, status_code=status.HTTP_201_CREATED)
+def create_corridor(payload: CorridorRequest, db: Session = Depends(get_db)):
+    repository = SqlDistributionRouteRepository(db)
+    corridor = RouteCorridor(payload.name)
+    descriptions = []
+    for route_id in payload.route_ids:
+        route = repository.get(route_id)
+        if route is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No existe la ruta #{route_id}")
+        leaf = SingleRoute(route)
+        corridor.add(leaf)
+        descriptions.append(leaf.describe())
+    return CorridorResponse(name=payload.name, total_distance_km=corridor.total_distance_km(), routes=descriptions)
 
 
 def _to_response(route: DistributionRoute) -> RouteResponse:

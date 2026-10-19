@@ -28,3 +28,13 @@ class RouteResponse(BaseModel):
     stops: list[RouteStopResponse]
     total_distance_km: float | None = None
     notes: str | None = None
+
+class CorridorRequest(BaseModel):
+    name: str
+    route_ids: list[int] = Field(min_length=1)
+
+
+class CorridorResponse(BaseModel):
+    name: str
+    total_distance_km: float
+    routes: list[str]
