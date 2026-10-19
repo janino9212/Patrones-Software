@@ -24,6 +24,7 @@ class RouteStopResponse(BaseModel):
 class RouteResponse(BaseModel):
     route_id: int
     vehicle_type: str
+    refrigerated: bool = False
     departure_date: date
     stops: list[RouteStopResponse]
     total_distance_km: float | None = None

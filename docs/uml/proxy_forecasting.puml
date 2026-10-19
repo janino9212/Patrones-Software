@@ -1,0 +1,50 @@
+@startuml proxy_forecasting
+title Proxy de protección (forecasting): validar JWT antes de generar el reporte
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Arial
+skinparam roundCorner 0
+skinparam class {
+  BackgroundColor #FDF3EE
+  BorderColor #444444
+  ArrowColor #444444
+}
+hide empty members
+
+interface "ForecastReportService\n<<Subject, Protocol>>" as ForecastReportService {
+  + execute(product_id: str): dict
+}
+
+class GenerateForecastReportUseCase <<RealSubject>> {
+  - _tracking_repository: TrackingEventRepository
+  + execute(product_id: str): dict
+}
+
+class AuthorizedForecastReportProxy <<Proxy>> {
+  - _real_service: ForecastReportService
+  - _token: str | None
+  - _token_decoder: Callable | None
+  + execute(product_id: str): dict
+  - _authorize(): str
+}
+
+class JWTManager <<Singleton>> {
+  + decode_token(token: str): dict
+}
+
+class ForecastAccessDenied <<Exception>> {
+}
+
+class "GET /forecasting/reports/{id}" as Endpoint <<Client>>
+class ProductOverviewFacade <<Client>>
+
+GenerateForecastReportUseCase .up.|> ForecastReportService
+AuthorizedForecastReportProxy .up.|> ForecastReportService
+AuthorizedForecastReportProxy o-right-> GenerateForecastReportUseCase : delega si\nel token es válido
+AuthorizedForecastReportProxy ..> JWTManager : valida token
+AuthorizedForecastReportProxy ..> ForecastAccessDenied : lanza
+Endpoint --> ForecastReportService
+ProductOverviewFacade --> ForecastReportService
+@enduml

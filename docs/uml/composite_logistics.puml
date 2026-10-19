@@ -1,0 +1,48 @@
+@startuml composite_logistics
+title Composite (logistics): corredores formados por rutas y otros corredores
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Arial
+skinparam roundCorner 0
+skinparam class {
+  BackgroundColor #FDF3EE
+  BorderColor #444444
+  ArrowColor #444444
+}
+hide empty members
+
+abstract class RouteComponent <<Component>> {
+  + {abstract} total_distance_km(): float
+  + {abstract} describe(): str
+}
+
+class SingleRoute <<Leaf>> {
+  - _route: DistributionRoute
+  + total_distance_km(): float
+  + describe(): str
+}
+
+class RouteCorridor <<Composite>> {
+  - _name: str
+  - _children: list[RouteComponent]
+  + add(component: RouteComponent): void
+  + total_distance_km(): float
+  + describe(): str
+}
+
+class DistributionRoute <<dataclass, frozen>> {
+  + vehicle_type: str
+  + total_distance_km: float | None
+  + route_id: int | None
+}
+
+SingleRoute -up-|> RouteComponent
+RouteCorridor -up-|> RouteComponent
+note right of RouteCorridor
+  _children: 0..* RouteComponent
+  (hojas u otros corredores)
+end note
+SingleRoute --> DistributionRoute : envuelve
+@enduml

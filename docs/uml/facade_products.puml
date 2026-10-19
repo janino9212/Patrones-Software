@@ -1,0 +1,49 @@
+@startuml facade_products
+title Facade (products): una sola llamada para el estado de un producto
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Arial
+skinparam roundCorner 0
+skinparam class {
+  BackgroundColor #FDF3EE
+  BorderColor #444444
+  ArrowColor #444444
+}
+hide empty members
+
+class ProductOverviewFacade <<Facade>> {
+  - _tracking_repository: TrackingEventRepository
+  - _forecast_service: ForecastReportService
+  + get_overview(product_id: str): ProductOverview
+}
+
+class ProductOverview <<dataclass, frozen>> {
+  + product_id: str
+  + current_stage: str | None
+  + last_event_at: datetime | None
+  + events_count: int
+  + forecast: dict
+}
+
+interface "TrackingEventRepository\n<<Protocol, módulo tracking>>" as TrackingEventRepository {
+  + save(event): TrackingEvent
+  + list_by_product(product_id): list[TrackingEvent]
+}
+
+interface "ForecastReportService\n<<Protocol, módulo forecasting>>" as ForecastReportService {
+  + execute(product_id: str): dict
+}
+
+class SqlTrackingEventRepository {
+}
+
+class "GET /products/{product_id}/overview" as Endpoint <<Client>>
+
+Endpoint --> ProductOverviewFacade : 1 llamada
+ProductOverviewFacade ..> ProductOverview : crea
+ProductOverviewFacade --> TrackingEventRepository : subsistema tracking
+ProductOverviewFacade --> ForecastReportService : subsistema forecasting
+SqlTrackingEventRepository .up.|> TrackingEventRepository
+@enduml

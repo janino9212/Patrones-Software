@@ -1,0 +1,44 @@
+@startuml flyweight_logistics
+title Flyweight (logistics): tipos de vehículo compartidos entre rutas
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Arial
+skinparam roundCorner 0
+skinparam class {
+  BackgroundColor #FDF3EE
+  BorderColor #444444
+  ArrowColor #444444
+}
+hide empty members
+
+class VehicleType <<Flyweight, dataclass, frozen>> {
+  + code: str
+  + refrigerated: bool
+}
+
+class VehicleTypeFactory <<FlyweightFactory>> {
+  - _pool: dict[str, VehicleType]
+  + {static} get(code: str): VehicleType
+  + {static} pool_size(): int
+}
+
+class DistributionRoute <<Client, dataclass, frozen>> {
+  + vehicle_type: str
+  + departure_date: date
+  + stops: tuple[RouteStop]
+  + «property» vehicle(): VehicleType
+}
+
+legend bottom
+  Pool: camion_estandar, moto_express, furgon_refrigerado.
+  Los códigos fuera del catálogo NO se guardan en el pool
+  (evita crecimiento ilimitado de memoria).
+  Estado extrínseco (fecha, paradas, distancia): propio de cada ruta.
+end legend
+
+VehicleTypeFactory o-right-> "3" VehicleType : pool
+DistributionRoute ..> VehicleTypeFactory : get(vehicle_type)
+DistributionRoute ..> VehicleType : comparte
+@enduml

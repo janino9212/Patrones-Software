@@ -1,0 +1,52 @@
+@startuml adapter_iot
+title Adapter (iot): normalizar lecturas de distintos fabricantes
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Arial
+skinparam roundCorner 0
+skinparam class {
+  BackgroundColor #FDF3EE
+  BorderColor #444444
+  ArrowColor #444444
+}
+hide empty members
+
+interface "SensorDataPort\n<<Target>>" as SensorDataPort {
+  + read(): SensorReading
+}
+
+class VendorATemperatureAdapter <<Adapter>> {
+  - _client: VendorATemperatureClient
+  + read(): SensorReading
+}
+
+class VendorATemperatureClient <<Adaptee>> {
+  + fetch_reading(): dict
+}
+
+class VendorAFaultyTemperatureClient <<Adaptee>> {
+  + fetch_reading(): dict
+}
+
+class SensorReading <<dataclass, frozen>> {
+  + device_id: str
+  + sensor_type: str
+  + value: float
+  + unit: str
+}
+
+class IngestSensorReadingUseCase <<Client>> {
+  + execute(vendor, product_id, stage): IngestResult
+}
+
+VendorATemperatureAdapter .up.|> SensorDataPort
+VendorATemperatureAdapter --> VendorATemperatureClient : adapta
+VendorATemperatureAdapter ..> SensorReading : crea
+IngestSensorReadingUseCase --> SensorDataPort : usa
+legend bottom
+  VendorAFaultyTemperatureClient (lectura de -60 °C) se inyecta en el mismo adaptador
+  desde get_vendor_adapter("a-faulty"); no hereda de VendorATemperatureClient.
+end legend
+@enduml

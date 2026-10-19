@@ -534,4 +534,69 @@ Content-Type: application/json
 ### Pendiente
 - Observer (`iot`), Strategy (`logistics`), Chain of Responsibility
   (`tracking`) y Command (`forecasting`).
-- Los endpoints nuevos tampoco exigen JWT.
+- Los endpoints nuevos de `iot` y `logistics` tampoco exigen JWT (el de
+  `forecasting` sí, desde la semana 10: ver Proxy más abajo).
+
+
+---
+
+## Semanas 9 y 10 — Facade, Flyweight y Proxy
+
+Los diagramas UML de los siete patrones estructurales están en
+[`docs/uml/`](docs/uml/) (fuentes `.puml` y PNG). El documento técnico
+actualizado es [`docs/semana_10.docx`](docs/semana_10.docx), y las decisiones
+de diseño están en
+[`docs/adr/0002-patrones-estructurales.md`](docs/adr/0002-patrones-estructurales.md).
+
+### Facade — módulo `products` (semana 9)
+- `src/products/application/product_overview_facade.py`: `ProductOverviewFacade`
+  combina el historial de `tracking` y el reporte de `forecasting` en una sola
+  llamada. Depende de los puertos `TrackingEventRepository` y
+  `ForecastReportService`, no de clases concretas.
+- `src/products/interfaces/api.py`: `GET /products/{product_id}/overview`
+  (requiere JWT, ver Proxy).
+- No incluye rutas de `logistics`: una `DistributionRoute` no guarda
+  `product_id`, así que no hay relación que consultar.
+
+### Flyweight — módulo `logistics` (semana 10)
+- `src/logistics/domain/vehicle_type.py`: `VehicleType` (inmutable) y
+  `VehicleTypeFactory`, que entrega siempre la misma instancia para cada tipo
+  del catálogo (`camion_estandar`, `moto_express`, `furgon_refrigerado`).
+- `DistributionRoute.vehicle` devuelve el flyweight de su tipo de vehículo, y
+  la respuesta de las rutas agrega el campo `refrigerated`.
+- **Aplicabilidad limitada:** el ahorro de memoria es pequeño porque el
+  sistema no maneja millones de rutas; se implementa porque el tipo de
+  vehículo es estado inmutable repetido y avanza el catálogo pendiente.
+- Los códigos fuera del catálogo (texto libre en rutas `custom`) **no** se
+  guardan en el pool, para que un cliente no pueda hacer crecer la memoria
+  enviando códigos distintos.
+
+### Proxy de protección — módulo `forecasting` (semana 10)
+- `src/forecasting/domain/report_service.py`: `ForecastReportService` (Subject)
+  y `ForecastAccessDenied`.
+- `src/forecasting/application/authorized_forecast_report_proxy.py`:
+  `AuthorizedForecastReportProxy` valida el JWT con `JWTManager` y solo
+  entonces delega en `GenerateForecastReportUseCase` (RealSubject).
+- **Cambio de comportamiento:** `GET /forecasting/reports/{product_id}` y
+  `GET /products/{product_id}/overview` ahora exigen
+  `Authorization: Bearer <token>` (se obtiene en `POST /login`) y responden
+  `401` si falta o es inválido.
+- Se evaluó un Proxy de caché, pero se eligió el de protección porque cierra el
+  pendiente de seguridad ya registrado.
+- **Ojo:** `POST /login` responde `409` si el usuario ya tiene una sesión
+  vigente, y todavía no existe logout. Si pierdes el token, hay que esperar a
+  que expire (60 min por defecto) para iniciar sesión de nuevo.
+
+```bash
+POST http://127.0.0.1:8000/login
+{ "username": "admin", "password": "admin123" }
+
+GET http://127.0.0.1:8000/products/PROD-001/overview
+Authorization: Bearer <access_token>
+```
+
+### Pendiente
+- Patrones de comportamiento: Strategy (`logistics`), Observer (`iot`),
+  Chain of Responsibility (`tracking`) y Command (`forecasting`).
+- Proteger con JWT los endpoints de `tracking`, `logistics` e `iot`.
+- Persistir el catálogo de tipos de vehículo.
