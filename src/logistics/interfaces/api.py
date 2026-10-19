@@ -3,16 +3,17 @@ from sqlalchemy.orm import Session
 
 from src.logistics.application.create_route import CreateDistributionRouteUseCase
 from src.logistics.domain.entities import DistributionRoute
+from src.logistics.domain.route_corridor import RouteCorridor
+from src.logistics.domain.route_leaf import SingleRoute
 from src.logistics.infrastructure.repository import SqlDistributionRouteRepository
 from src.logistics.interfaces.schemas import (
+    CorridorRequest,
+    CorridorResponse,
     CreateRouteRequest,
     RouteResponse,
     RouteStopResponse,
 )
 from src.shared.database import get_db
-from src.logistics.domain.route_corridor import RouteCorridor
-from src.logistics.domain.route_leaf import SingleRoute
-from src.logistics.interfaces.schemas import CorridorRequest, CorridorResponse  # suma a tus imports de schemas
 
 router = APIRouter(prefix="/logistics", tags=["logistics"])
 
@@ -54,6 +55,7 @@ def get_route(route_id: int, db: Session = Depends(get_db)):
 def list_routes(db: Session = Depends(get_db)):
     repository = SqlDistributionRouteRepository(db)
     return [_to_response(route) for route in repository.list_all()]
+
 
 @router.post("/corridors", response_model=CorridorResponse, status_code=status.HTTP_201_CREATED)
 def create_corridor(payload: CorridorRequest, db: Session = Depends(get_db)):
