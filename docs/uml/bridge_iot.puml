@@ -1,0 +1,46 @@
+@startuml bridge_iot
+title Bridge (iot): urgencia de la alerta separada del canal de envío
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Arial
+skinparam roundCorner 0
+skinparam class {
+  BackgroundColor #FDF3EE
+  BorderColor #444444
+  ArrowColor #444444
+}
+hide empty members
+
+abstract class NotificationDispatcher <<Abstraction>> {
+  # _channel: NotificationChannel
+  + {abstract} dispatch(message: str): void
+}
+
+class UrgentNotificationDispatcher <<RefinedAbstraction>> {
+  + dispatch(message: str): void
+}
+
+class RoutineNotificationDispatcher <<RefinedAbstraction>> {
+  + dispatch(message: str): void
+}
+
+abstract class NotificationChannel <<Implementor>> {
+  + {abstract} send(message: str): void
+}
+
+class MqttChannel <<ConcreteImplementor>> {
+  + send(message: str): void
+}
+
+class WebhookChannel <<ConcreteImplementor>> {
+  + send(message: str): void
+}
+
+UrgentNotificationDispatcher -up-|> NotificationDispatcher
+RoutineNotificationDispatcher -up-|> NotificationDispatcher
+NotificationDispatcher o-right-> NotificationChannel : delega el envío
+MqttChannel -up-|> NotificationChannel
+WebhookChannel -up-|> NotificationChannel
+@enduml

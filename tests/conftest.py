@@ -8,6 +8,7 @@ from src.main import app
 from src.shared.database import get_db
 from src.shared.models import Base
 from src.shared.password_hashing import hash_password
+from src.shared.security import JWTManager
 from src.shared.user_repository import create_user
 
 _TEST_DATABASE_URL = "sqlite:///:memory:"
@@ -49,6 +50,22 @@ def client(db_session):
         yield TestClient(app)
     finally:
         app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def auth_headers():
+    """Cabecera Authorization con un JWT válido para endpoints protegidos.
+
+    JWTManager es un Singleton con estado compartido, así que se limpia la
+    sesión del usuario de prueba antes y después de cada test."""
+    username = "api_test_user"
+    manager = JWTManager()
+    manager.invalidate_token(username)
+    token = manager.create_access_token(username)
+    try:
+        yield {"Authorization": f"Bearer {token}"}
+    finally:
+        manager.invalidate_token(username)
 
 
 @pytest.fixture

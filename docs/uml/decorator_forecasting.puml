@@ -1,0 +1,48 @@
+@startuml decorator_forecasting
+title Decorator (forecasting): enriquecer el reporte de pronóstico
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Arial
+skinparam roundCorner 0
+skinparam class {
+  BackgroundColor #FDF3EE
+  BorderColor #444444
+  ArrowColor #444444
+}
+hide empty members
+
+abstract class ForecastReport <<Component>> {
+  + {abstract} generate(): dict
+}
+
+class BaseForecastReport <<ConcreteComponent>> {
+  - _product_id: str
+  - _predicted_demand: float
+  - _based_on_events: int
+  + generate(): dict
+}
+
+class ForecastReportDecorator <<Decorator>> {
+  # _wrapped: ForecastReport
+  + generate(): dict
+}
+
+class ConfidenceIntervalDecorator <<ConcreteDecorator>> {
+  + generate(): dict
+}
+
+class TrendAnnotationDecorator <<ConcreteDecorator>> {
+  + generate(): dict
+}
+
+BaseForecastReport -up-|> ForecastReport
+ForecastReportDecorator -up-|> ForecastReport
+note right of ForecastReportDecorator
+  _wrapped envuelve a otro ForecastReport
+  (el base u otro decorador)
+end note
+ConfidenceIntervalDecorator -up-|> ForecastReportDecorator
+TrendAnnotationDecorator -up-|> ForecastReportDecorator
+@enduml

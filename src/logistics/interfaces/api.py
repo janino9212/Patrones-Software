@@ -76,6 +76,7 @@ def _to_response(route: DistributionRoute) -> RouteResponse:
     return RouteResponse(
         route_id=route.route_id,
         vehicle_type=route.vehicle_type,
+        refrigerated=route.vehicle.refrigerated,
         departure_date=route.departure_date,
         stops=[
             RouteStopResponse(sequence=stop.sequence, location=stop.location, notes=stop.notes)
