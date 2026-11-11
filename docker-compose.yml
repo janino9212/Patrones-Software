@@ -1,0 +1,49 @@
+# Levanta el sistema completo: base de datos, API e interfaz.
+#
+#   docker compose up --build
+#
+# Interfaz: http://localhost:5173   API: http://localhost:8000/docs
+#
+# Las credenciales de abajo son valores de DESARROLLO. Para cualquier otro
+# entorno, defínelas en un archivo `.env` junto a este (no se sube al repo):
+#   POSTGRES_PASSWORD=...   JWT_SECRET_KEY=...
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: scm
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-scm_dev_password}
+      POSTGRES_DB: scm_db
+    volumes:
+      - scm_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scm -d scm_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://scm:${POSTGRES_PASSWORD:-scm_dev_password}@db:5432/scm_db
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-clave-de-desarrollo-cambiar-en-otros-entornos}
+      CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8000
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+
+volumes:
+  scm_db_data:

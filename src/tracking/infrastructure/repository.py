@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from src.shared.datetime_utils import ensure_utc
 from src.tracking.domain.entities import (
     SensorTrackingEvent,
     StageChangeTrackingEvent,
@@ -44,13 +45,24 @@ class SqlTrackingEventRepository:
         )
         return [self._to_domain(row) for row in rows]
 
+    def list_recent(self, limit: int) -> list[TrackingEvent]:
+        """Los eventos más recientes de todos los productos, del más nuevo
+        al más viejo."""
+        rows = (
+            self._db.query(TrackingEventModel)
+            .order_by(TrackingEventModel.timestamp.desc(), TrackingEventModel.id.desc())
+            .limit(limit)
+            .all()
+        )
+        return [self._to_domain(row) for row in rows]
+
     @staticmethod
     def _to_domain(row: TrackingEventModel) -> TrackingEvent:
         if row.event_type == "sensor":
             return SensorTrackingEvent(
                 product_id=row.product_id,
                 stage=row.stage,
-                timestamp=row.timestamp,
+                timestamp=ensure_utc(row.timestamp),
                 sensor_type=row.sensor_type,
                 reading_value=row.reading_value,
                 unit=row.unit,
@@ -59,7 +71,7 @@ class SqlTrackingEventRepository:
             return StageChangeTrackingEvent(
                 product_id=row.product_id,
                 stage=row.stage,
-                timestamp=row.timestamp,
+                timestamp=ensure_utc(row.timestamp),
                 previous_stage=row.previous_stage,
                 responsible=row.responsible,
             )

@@ -1,0 +1,55 @@
+@startuml template_method_forecasting
+title Template Method (forecasting): todos los modelos siguen los mismos pasos
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Arial
+skinparam roundCorner 0
+skinparam class {
+  BackgroundColor #FDF3EE
+  BorderColor #444444
+  ArrowColor #444444
+}
+hide empty members
+
+abstract class DemandForecastModel <<AbstractClass>> {
+  + name: str
+  + label: str
+  + min_points: int
+  + forecast(series): float
+  # _prepare(series): list[float]
+  # _check_enough_data(series): None
+  # {abstract} _estimate(series): float
+  # _finalize(estimate): float
+}
+
+class MovingAverageModel <<ConcreteClass>> {
+  # _estimate(series): float
+}
+class ExponentialSmoothingModel <<ConcreteClass>> {
+  # _estimate(series): float
+}
+class LinearTrendModel <<ConcreteClass>> {
+  + min_points = 2
+  # _estimate(series): float
+}
+
+class ForecastPlanner <<Client>> {
+  + compute(product_id, model_name): ForecastPlan
+}
+
+class InsufficientDemandData <<Exception>>
+
+MovingAverageModel -up-|> DemandForecastModel
+ExponentialSmoothingModel -up-|> DemandForecastModel
+LinearTrendModel -up-|> DemandForecastModel
+ForecastPlanner --> DemandForecastModel : forecast(series)
+DemandForecastModel ..> InsufficientDemandData : lanza
+
+note right of DemandForecastModel
+  forecast() es el método plantilla:
+  _prepare -> _check_enough_data
+  -> _estimate -> _finalize
+end note
+@enduml

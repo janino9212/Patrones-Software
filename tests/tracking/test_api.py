@@ -84,3 +84,30 @@ def test_list_events_returns_empty_list_for_unknown_product(client):
 
     assert response.status_code == 200
     assert response.json() == []
+
+
+def _stage_change(product_id: str, stage: str = "transporte") -> dict:
+    return {
+        "event_type": "stage_change",
+        "product_id": product_id,
+        "stage": stage,
+        "previous_stage": "fabricacion",
+        "responsible": "Planta 1",
+    }
+
+
+def test_blank_stage_is_rejected_by_the_validation_chain(client):
+    response = client.post("/tracking/events", json=_stage_change("PROD-chain", stage="  "))
+
+    assert response.status_code == 400
+    assert "stage" in response.json()["detail"]
+    assert client.get("/tracking/events/PROD-chain").json() == []
+
+
+def test_recent_events_lists_newest_first_across_products(client):
+    for product_id in ("PROD-r1", "PROD-r2", "PROD-r3"):
+        client.post("/tracking/events", json=_stage_change(product_id))
+
+    body = client.get("/tracking/events", params={"limit": 2}).json()
+
+    assert [event["product_id"] for event in body] == ["PROD-r3", "PROD-r2"]

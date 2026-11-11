@@ -1,6 +1,6 @@
 import dataclasses
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from src.shared.database import get_db
@@ -41,6 +41,15 @@ def register_event(
         ) from exc
 
     return _to_response(event)
+
+
+@router.get("/events", response_model=list[TrackingEventResponse])
+def list_recent_events(
+    limit: int = Query(default=20, ge=1, le=100),
+    db: Session = Depends(get_db),
+):
+    repository = SqlTrackingEventRepository(db)
+    return [_to_response(event) for event in repository.list_recent(limit)]
 
 
 @router.get("/events/{product_id}", response_model=list[TrackingEventResponse])

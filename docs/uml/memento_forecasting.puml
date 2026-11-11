@@ -1,0 +1,53 @@
+@startuml memento_forecasting
+title Memento (forecasting): restaurar el pronóstico anterior al deshacer un recálculo
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Arial
+skinparam roundCorner 0
+skinparam class {
+  BackgroundColor #FDF3EE
+  BorderColor #444444
+  ArrowColor #444444
+}
+hide empty members
+
+class ForecastPlan <<Originator>> {
+  + product_id: str
+  + model: str
+  + predicted_demand: float
+  + based_on_records: int
+  + generated_at: datetime
+  + create_memento(): ForecastPlanMemento
+  + {static} restore(memento): ForecastPlan
+}
+
+class ForecastPlanMemento <<Memento>> {
+  - _product_id: str
+  - _model: str
+  - _predicted_demand: float
+  - _based_on_records: int
+  - _generated_at: datetime
+}
+
+class RecalculateForecastCommand <<Caretaker>> {
+  - _previous: ForecastPlanMemento | None
+  + execute(planner): ForecastPlan
+  + undo(planner): ForecastPlan
+}
+
+class ForecastPlanner {
+  + store(plan): ForecastPlan
+}
+
+ForecastPlan ..> ForecastPlanMemento : crea y lee
+RecalculateForecastCommand o--> ForecastPlanMemento : guarda sin abrir
+RecalculateForecastCommand ..> ForecastPlan : restore(memento)
+RecalculateForecastCommand --> ForecastPlanner : store(plan restaurado)
+
+note right of ForecastPlanMemento
+  Inmutable. Solo ForecastPlan
+  interpreta su contenido.
+end note
+@enduml

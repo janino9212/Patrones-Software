@@ -30,3 +30,12 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Frontend
+node_modules/
+frontend/dist/
+
+# Configuración local del asistente
+.claude/
+.impeccable/
+*.tsbuildinfo

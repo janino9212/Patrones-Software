@@ -1,0 +1,61 @@
+@startuml state_logistics
+title State (logistics): el estado de la ruta decide qué acciones admite
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Arial
+skinparam roundCorner 0
+skinparam class {
+  BackgroundColor #FDF3EE
+  BorderColor #444444
+  ArrowColor #444444
+}
+hide empty members
+
+abstract class RouteState <<State>> {
+  + status: str
+  + label: str
+  + allowed_actions: tuple[str, ...]
+  + dispatch(): RouteState
+  + deliver(): RouteState
+  + cancel(): RouteState
+}
+
+class PlannedState <<ConcreteState>> {
+  + dispatch(): InTransitState
+  + cancel(): CancelledState
+}
+class InTransitState <<ConcreteState>> {
+  + deliver(): DeliveredState
+  + cancel(): CancelledState
+}
+class DeliveredState <<ConcreteState>>
+class CancelledState <<ConcreteState>>
+
+class DistributionRoute <<Context>> {
+  + status: str
+  + state: RouteState
+}
+
+class ChangeRouteStatusUseCase <<Client>> {
+  + execute(route_id, action): DistributionRoute
+}
+
+class InvalidRouteTransition <<Exception>>
+
+PlannedState -up-|> RouteState
+InTransitState -up-|> RouteState
+DeliveredState -up-|> RouteState
+CancelledState -up-|> RouteState
+DistributionRoute --> RouteState : state_for(status)
+ChangeRouteStatusUseCase --> DistributionRoute
+RouteState ..> InvalidRouteTransition : acción no permitida
+PlannedState ..> InTransitState : dispatch
+InTransitState ..> DeliveredState : deliver
+
+note bottom of DeliveredState
+  Estados terminales: heredan el rechazo
+  de todas las acciones.
+end note
+@enduml

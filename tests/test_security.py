@@ -25,11 +25,25 @@ def test_create_and_decode_access_token_roundtrip(jwt_manager):
     assert payload["sub"] == "user_singleton_test"
 
 
-def test_create_access_token_twice_for_same_user_raises_value_error(jwt_manager):
-    jwt_manager.create_access_token("user_duplicate_test")
+def test_new_token_for_same_user_replaces_the_active_session(jwt_manager):
+    first = jwt_manager.create_access_token("user_duplicate_test")
+    second = jwt_manager.create_access_token("user_duplicate_test")
+
+    assert first != second
+    assert jwt_manager.decode_active_token(second)["sub"] == "user_duplicate_test"
+    with pytest.raises(ValueError):
+        jwt_manager.decode_active_token(first)
+
+
+def test_decode_active_token_rejects_token_after_invalidation(jwt_manager):
+    token = jwt_manager.create_access_token("user_singleton_test")
+
+    jwt_manager.invalidate_token("user_singleton_test")
 
     with pytest.raises(ValueError):
-        jwt_manager.create_access_token("user_duplicate_test")
+        jwt_manager.decode_active_token(token)
+    # La firma sigue siendo válida: solo dejó de ser la sesión activa.
+    assert jwt_manager.decode_token(token)["sub"] == "user_singleton_test"
 
 
 def test_decode_invalid_token_raises_value_error(jwt_manager):

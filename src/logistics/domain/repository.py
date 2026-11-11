@@ -12,3 +12,10 @@ class DistributionRouteRepository(Protocol):
     def get(self, route_id: int) -> DistributionRoute | None: ...
 
     def list_all(self) -> list[DistributionRoute]: ...
+
+    def update_status(
+        self, route_id: int, new_status: str, expected_status: str
+    ) -> DistributionRoute | None:
+        """Cambia el estado solo si la ruta sigue en `expected_status`.
+        Devuelve None si otra operación la cambió antes."""
+        ...

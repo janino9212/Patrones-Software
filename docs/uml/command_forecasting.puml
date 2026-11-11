@@ -1,0 +1,66 @@
+@startuml command_forecasting
+title Command (forecasting): generar y recalcular pronósticos como objetos deshacibles
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Arial
+skinparam roundCorner 0
+skinparam class {
+  BackgroundColor #FDF3EE
+  BorderColor #444444
+  ArrowColor #444444
+}
+hide empty members
+
+abstract class ForecastCommand <<Command>> {
+  + name: str
+  + product_id: str
+  + {abstract} execute(planner): ForecastPlan
+  + {abstract} undo(planner): ForecastPlan | None
+}
+
+class GenerateForecastCommand <<ConcreteCommand>> {
+  - _model_name: str
+  + execute(planner): ForecastPlan
+  + undo(planner): None
+}
+
+class RecalculateForecastCommand <<ConcreteCommand>> {
+  - _model_name: str | None
+  - _previous: ForecastPlanMemento | None
+  + execute(planner): ForecastPlan
+  + undo(planner): ForecastPlan
+}
+
+class ForecastCommandInvoker <<Invoker>> {
+  - _undoable: list[ForecastCommand]
+  - _log: list[CommandLogEntry]
+  + run(command, planner): ForecastPlan
+  + undo_last(product_id, planner): ForecastPlan | None
+  + can_undo(product_id): bool
+  + log(): tuple[CommandLogEntry, ...]
+}
+
+class ForecastPlanner <<Receiver>> {
+  + current(product_id): ForecastPlan | None
+  + compute(product_id, model_name): ForecastPlan
+  + store(plan): ForecastPlan
+  + discard(product_id): None
+}
+
+class "POST /forecasting/commands" as Endpoint <<Client>>
+
+GenerateForecastCommand -up-|> ForecastCommand
+RecalculateForecastCommand -up-|> ForecastCommand
+ForecastCommandInvoker o--> ForecastCommand : historial
+ForecastCommand ..> ForecastPlanner : opera sobre
+Endpoint --> ForecastCommandInvoker : run(command, planner)
+Endpoint ..> ForecastCommand : crea
+
+note bottom of ForecastPlanner
+  El receiver se pasa en cada llamada:
+  está ligado a la sesión de BD de la petición
+  y el comando la sobrevive en el historial.
+end note
+@enduml

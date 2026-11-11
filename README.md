@@ -64,10 +64,11 @@ src/<modulo>/
 - **Framework API:** FastAPI
 - **Pruebas:** pytest + pytest-cov (cobertura objetivo ≥ 80%)
 - **CI/CD:** GitHub Actions
-- **Monitoreo/Logging:** Prometheus + Grafana (por definir en infraestructura)
+- **Frontend:** React + Vite + TypeScript + Tailwind CSS (`frontend/`)
+- **Monitoreo/Logging:** Prometheus + Grafana (pendiente, no implementado)
 - **Contenedores:** Docker / docker-compose
 
-## Patrones GoF planeados (mínimo 8, ≥2 por categoría)
+## Patrones GoF planeados al inicio (mínimo 8, ≥2 por categoría)
 
 Repartidos por dueño de módulo: cada integrante es responsable de 2 módulos
 completos (dominio, aplicación, infraestructura, interfaces, pruebas y
@@ -84,7 +85,7 @@ documentación de esos módulos).
 | Comportamiento | Chain of Responsibility | `tracking` | Validación de eventos de la cadena de suministro | Julián Niño |
 | Comportamiento | Command | `forecasting` | Encapsular operaciones de generación/recálculo de pronósticos | Julián Niño |
 
-(Sujeto a ajuste conforme avance el diseño; se documentará en UML y ADRs.)
+(Esta fue la tabla inicial. El estado final, con 19 patrones aplicados, está al final de este documento.)
 
 ### Dueños de módulo
 
@@ -99,15 +100,45 @@ Cada quien abre sus propias ramas `feature/<modulo>-...` desde `develop` para
 trabajar en sus módulos, pero cualquiera puede hacer PR de revisión sobre el
 módulo del otro.
 
-## Cómo ejecutar (en construcción)
+## Cómo ejecutar
+
+El sistema tiene dos partes: la API (FastAPI, puerto 8000) y la interfaz
+(React, puerto 5173).
+
+### Opción A — Docker (todo de una vez)
+
+```bash
+docker compose up --build
+```
+
+Levanta Postgres, la API y la interfaz. Abre <http://localhost:5173>.
+
+### Opción B — En local
+
+API:
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate        # en Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env  # completar DATABASE_URL y JWT_SECRET_KEY reales
+cp .env.example .env             # completar DATABASE_URL y JWT_SECRET_KEY reales
 uvicorn src.main:app --reload
 ```
+
+Interfaz, en otra terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Abre <http://localhost:5173> e inicia sesión con el usuario sembrado
+(`admin` / `admin123`) o crea una cuenta desde la misma pantalla. La
+documentación interactiva de la API está en <http://127.0.0.1:8000/docs>.
+
+Si la API corre en otra dirección, indícala en `frontend/.env` con
+`VITE_API_URL` (ver `frontend/.env.example`).
 
 ### Configuración (variables de entorno)
 
@@ -121,6 +152,8 @@ para el listado completo:
 | `JWT_SECRET_KEY` | Clave para firmar/verificar los JWT | Clave de desarrollo, **no usar en producción** |
 | `JWT_ALGORITHM` | Algoritmo de firma JWT | `HS256` |
 | `JWT_EXPIRE_MINUTES` | Minutos de expiración del token | `60` |
+| `CORS_ORIGINS` | Orígenes del frontend autorizados, separados por coma | `http://localhost:5173,http://127.0.0.1:5173` |
+| `ALLOW_REGISTRATION` | Permite crear cuentas con `POST /register` | `true` |
 
 Para usar una base de datos en la nube (Neon, Supabase, etc.) en vez de una
 instalación local de Postgres, solo hay que definir `DATABASE_URL` en el
@@ -131,6 +164,10 @@ código (Singleton `DatabaseConnection`) no cambia.
 
 ```bash
 pytest --cov=src --cov-report=term-missing
+```
+
+```bash
+cd frontend && npm test
 ```
 
 ## Estructura de commits
@@ -600,3 +637,106 @@ Authorization: Bearer <access_token>
   Chain of Responsibility (`tracking`) y Command (`forecasting`).
 - Proteger con JWT los endpoints de `tracking`, `logistics` e `iot`.
 - Persistir el catálogo de tipos de vehículo.
+
+---
+
+## Semanas 11 a 15 — Patrones de comportamiento, frontend y Docker
+
+Con esta entrega el sistema aplica **19 de los 23 patrones GoF**. Las
+decisiones, incluidos los cuatro que no aplican, están en
+[`docs/adr/0003-patrones-de-comportamiento.md`](docs/adr/0003-patrones-de-comportamiento.md);
+los diagramas, en [`docs/uml/`](docs/uml/) (fuentes `.puml` y PNG), y el
+documento técnico de la entrega, en [`docs/semana_15.docx`](docs/semana_15.docx).
+
+| Categoría | Aplicados | No aplican |
+|---|---|---|
+| Creacionales | Singleton, Factory Method, Abstract Factory, Builder | Prototype |
+| Estructurales | Adapter, Bridge, Composite, Decorator, Facade, Flyweight, Proxy | — |
+| De comportamiento | Chain of Responsibility, Command, Iterator, Memento, Observer, State, Strategy, Template Method | Interpreter, Mediator, Visitor |
+
+### Chain of Responsibility — `tracking`
+- `src/tracking/domain/validation_chain.py`: `EventValidationHandler` y cuatro
+  eslabones (campos requeridos → texto no vacío → identificador de producto →
+  lectura finita). El primero que falla corta la cadena.
+- `RegisterTrackingEventUseCase` pasa los datos crudos por la cadena antes de
+  crear el evento con el Factory Method.
+- Nuevo `GET /tracking/events?limit=N`: últimos eventos de todos los productos.
+
+### Strategy, State e Iterator — `logistics`
+- **Strategy:** `src/logistics/domain/route_optimization.py`. `RoutePlanner`
+  (contexto) delega el orden de las paradas en `KeepOrderStrategy`,
+  `NearestNeighborStrategy` o `TwoOptStrategy`. `POST /logistics/routes` acepta
+  `optimization` (`none`, `nearest_neighbor`, `two_opt`) y
+  `POST /logistics/optimizations/compare` aplica las tres a las mismas paradas.
+- Las distancias salen de un catálogo de 12 ciudades
+  (`GET /logistics/locations`) y son **en línea recta**, no por carretera.
+- **State:** `src/logistics/domain/route_state.py`. Una ruta nace
+  `planned` y pasa a `in_transit`, `delivered` o `cancelled` con
+  `POST /logistics/routes/{id}/transition`. Una acción que el estado no admite
+  responde `409`.
+- **Iterator:** `RouteLeafIterator` en `route_corridor.py` recorre en
+  profundidad las rutas de un corredor. `POST /logistics/corridors` ahora acepta
+  `sub_corridors` anidados (hasta 4 niveles).
+
+```bash
+POST http://127.0.0.1:8000/logistics/routes
+{ "route_type": "standard", "departure_date": "2026-11-20",
+  "stops": ["Bucaramanga", "Bogotá", "Girón", "Tunja"],
+  "optimization": "nearest_neighbor" }
+
+POST http://127.0.0.1:8000/logistics/routes/1/transition
+{ "action": "dispatch" }
+```
+
+### Template Method, Command y Memento — `forecasting`
+- **Template Method:** `src/forecasting/domain/forecast_models.py`.
+  `DemandForecastModel.forecast` fija los pasos; `MovingAverageModel`,
+  `ExponentialSmoothingModel` y `LinearTrendModel` aportan la estimación.
+- El historial de demanda se carga con `POST /forecasting/demand` (un valor por
+  producto y mes).
+- **Command:** `src/forecasting/application/forecast_commands.py`.
+  `POST /forecasting/commands` ejecuta `generate` o `recalculate`;
+  `POST /forecasting/commands/undo` deshace la última operación del producto y
+  `GET /forecasting/commands` devuelve la bitácora.
+- **Memento:** `ForecastPlan.create_memento()` / `restore()` en
+  `src/forecasting/domain/forecast_plan.py`. El recálculo guarda la instantánea
+  y deshacer la restaura.
+- El reporte (`GET /forecasting/reports/{id}`) usa el pronóstico del modelo si
+  existe y agrega el campo `source`. **Sin historial de demanda sigue siendo la
+  estimación simulada** (`nº de eventos × 12.5`).
+
+### Observer — `iot`
+- `src/iot/domain/sensor_observer.py`: `SensorReadingSubject` y `SensorObserver`.
+- `src/iot/application/monitoring.py`: tres observadores — `LiveFeedObserver`
+  (`GET /iot/readings/recent`), `ThresholdAlertObserver` (`GET /iot/alerts`;
+  temperatura de 2 a 30 °C, humedad de 20 a 80 %) y `DeviceRegistryObserver`
+  (`GET /iot/devices`).
+- Segundo fabricante: `VendorBHumidityAdapter` (vendor `b`).
+- `POST /iot/sensors/{vendor}/ingest` acepta `simulated_value` para elegir la
+  lectura del dispositivo simulado. **No hay hardware real.**
+
+### Catálogo de productos — `products`
+- `POST /products` y `GET /products`. El `code` es el `product_id` de los demás
+  módulos. Todavía no se valida que un evento apunte a un producto existente.
+
+### Sesión
+- **Cambio de comportamiento:** `tracking`, `logistics` e `iot` ahora exigen
+  `Authorization: Bearer <token>`.
+- **Cambio de comportamiento:** un nuevo `POST /login` reemplaza la sesión
+  anterior (antes respondía `409`).
+- Nuevos `POST /logout` y `GET /me`.
+- `POST /register` sigue abierto para la demostración. Con
+  `ALLOW_REGISTRATION=false` responde `403` y solo entran los usuarios que ya
+  existen.
+
+### Frontend
+Interfaz en `frontend/` (React, Vite, TypeScript, Tailwind) con las pantallas
+Panel, Productos, Seguimiento, Logística, Pronósticos, Monitoreo IoT y
+Patrones. Cada panel indica qué patrones lo respaldan. Decisiones visuales en
+[`DESIGN.md`](DESIGN.md).
+
+### Limitaciones conocidas
+- Las sesiones, la bitácora de comandos y el monitor de sensores viven en
+  memoria: se pierden al reiniciar la API y no funcionan con varios workers.
+- No hay límite de peticiones (rate limiting) ni migraciones con Alembic.
+- Monitoreo/logging con Prometheus y Grafana sigue sin implementar.
