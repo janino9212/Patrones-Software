@@ -1,0 +1,50 @@
+@startuml iterator_logistics
+title Iterator (logistics): recorrer las rutas de un corredor sin conocer su anidación
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Arial
+skinparam roundCorner 0
+skinparam class {
+  BackgroundColor #FDF3EE
+  BorderColor #444444
+  ArrowColor #444444
+}
+hide empty members
+
+abstract class RouteComponent <<Component>> {
+  + {abstract} total_distance_km(): float
+  + {abstract} describe(): str
+}
+
+class SingleRoute <<Leaf>>
+
+class RouteCorridor <<Aggregate>> {
+  - _children: list[RouteComponent]
+  + children: tuple[RouteComponent, ...]
+  + add(component): None
+  + __iter__(): RouteLeafIterator
+}
+
+class RouteLeafIterator <<Iterator>> {
+  - _pending: list[RouteComponent]
+  + __iter__(): RouteLeafIterator
+  + __next__(): RouteComponent
+}
+
+class "POST /logistics/corridors" as Endpoint <<Client>>
+
+SingleRoute -up-|> RouteComponent
+RouteCorridor -up-|> RouteComponent
+RouteCorridor o--> RouteComponent : hijos
+RouteCorridor ..> RouteLeafIterator : crea
+RouteLeafIterator --> RouteComponent : entrega hojas
+Endpoint --> RouteCorridor : for leaf in corridor
+
+note right of RouteLeafIterator
+  Recorrido en profundidad con pila propia:
+  dos recorridos del mismo corredor
+  no se interfieren.
+end note
+@enduml

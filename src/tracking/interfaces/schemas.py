@@ -1,22 +1,23 @@
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TrackingEventRequest(BaseModel):
     event_type: Literal["sensor", "stage_change"]
-    product_id: str
-    stage: str
+    # Los topes coinciden con el tamaño de las columnas de tracking_events.
+    product_id: str = Field(max_length=100)
+    stage: str = Field(max_length=50)
 
     # Específicos de "sensor"
-    sensor_type: str | None = None
+    sensor_type: str | None = Field(default=None, max_length=50)
     reading_value: float | None = None
-    unit: str | None = None
+    unit: str | None = Field(default=None, max_length=20)
 
     # Específicos de "stage_change"
-    previous_stage: str | None = None
-    responsible: str | None = None
+    previous_stage: str | None = Field(default=None, max_length=50)
+    responsible: str | None = Field(default=None, max_length=100)
 
     model_config = ConfigDict(
         json_schema_extra={

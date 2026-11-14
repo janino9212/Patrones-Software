@@ -28,6 +28,18 @@ class ConfidenceIntervalDecorator(ForecastReportDecorator):
         return data
 
 
+class SourceAnnotationDecorator(ForecastReportDecorator):
+    """Anota de dónde salió la demanda estimada: el nombre del modelo de
+    pronóstico o la estimación simulada a partir de eventos de tracking."""
+
+    def __init__(self, wrapped: ForecastReport, source: str):
+        super().__init__(wrapped)
+        self._source = source
+
+    def generate(self) -> dict:
+        return {**super().generate(), "source": self._source}
+
+
 class TrendAnnotationDecorator(ForecastReportDecorator):
     def generate(self) -> dict:
         data = super().generate()

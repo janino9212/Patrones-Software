@@ -1,0 +1,190 @@
+@import "tailwindcss";
+@import "@fontsource-variable/overpass/wght.css";
+@import "@fontsource-variable/overpass-mono/wght.css";
+
+/*
+ * Mundo visual: señalización vial y guías de transporte.
+ * Riel verde carretera, amarillo de señal para la acción principal y la
+ * selección, azul informativo para las etiquetas de patrón. Ver DESIGN.md.
+ */
+@theme {
+  --font-sans: "Overpass Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Overpass Mono Variable", ui-monospace, monospace;
+
+  --color-ground: #f1f4ee;
+  --color-surface: #ffffff;
+  --color-sunken: #e8ece4;
+  --color-ink: #13201a;
+  --color-ink-soft: #45564d;
+  --color-line: #cfd7cc;
+  --color-line-strong: #9aa89d;
+
+  --color-rail: #0e3b2c;
+  --color-rail-raised: #185240;
+  --color-rail-ink: #e3efe8;
+  --color-rail-ink-soft: #a9c6b8;
+
+  --color-signal: #f5c400;
+  --color-signal-strong: #dcae00;
+  --color-signal-soft: #fdf3c4;
+
+  --color-go: #17703f;
+  --color-go-soft: #ddf0e3;
+  --color-stop: #b3261e;
+  --color-stop-soft: #fbe4e1;
+  --color-caution: #8a4b00;
+  --color-caution-soft: #ffeecb;
+  --color-info: #1c5a9e;
+  --color-info-soft: #e1ecf8;
+  --color-idle: #55625a;
+  --color-idle-soft: #e6eae4;
+
+  --radius-control: 8px;
+  --radius-panel: 12px;
+}
+
+@layer base {
+  html {
+    font-size: 17px;
+    color-scheme: light;
+  }
+
+  body {
+    background: var(--color-ground);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+    letter-spacing: -0.015em;
+  }
+
+  ::selection {
+    background: var(--color-signal);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-info);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  input,
+  select,
+  textarea {
+    caret-color: var(--color-go);
+  }
+
+  a {
+    text-underline-offset: 0.2em;
+  }
+
+  /* Un hijo de grid no debe ensanchar la página por su contenido. */
+  .grid > * {
+    min-width: 0;
+  }
+
+  * {
+    scrollbar-color: var(--color-line-strong) transparent;
+    scrollbar-width: thin;
+  }
+}
+
+@utility num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+@layer components {
+  .control {
+    width: 100%;
+    min-height: 2.6rem;
+    padding: 0.45rem 0.7rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-control);
+    color: var(--color-ink);
+    transition:
+      border-color 150ms ease-out,
+      box-shadow 150ms ease-out;
+  }
+
+  .control::placeholder {
+    color: var(--color-idle);
+  }
+
+  .control:hover {
+    border-color: var(--color-ink-soft);
+  }
+
+  .control:focus-visible {
+    outline: none;
+    border-color: var(--color-info);
+    box-shadow: 0 0 0 3px var(--color-info-soft);
+  }
+
+  .control:disabled {
+    background: var(--color-sunken);
+    color: var(--color-idle);
+    cursor: not-allowed;
+  }
+
+  .control[aria-invalid="true"] {
+    border-color: var(--color-stop);
+  }
+
+  .skeleton {
+    border-radius: 6px;
+    background: linear-gradient(
+      90deg,
+      var(--color-sunken) 25%,
+      var(--color-ground) 50%,
+      var(--color-sunken) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-slide 1.4s ease-in-out infinite;
+  }
+
+  /* El momento de movimiento de la interfaz: una lectura recién llegada. */
+  .arrival {
+    animation: arrival 900ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+@keyframes skeleton-slide {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes arrival {
+  from {
+    background-color: var(--color-signal-soft);
+    clip-path: inset(0 100% 0 0);
+  }
+  60% {
+    clip-path: inset(0 0 0 0);
+  }
+  to {
+    background-color: transparent;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton,
+  .arrival {
+    animation: none;
+  }
+}

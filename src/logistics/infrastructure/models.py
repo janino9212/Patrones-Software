@@ -17,3 +17,4 @@ class DistributionRouteModel(Base):
     stops = Column(JSON, nullable=False)
     total_distance_km = Column(Float, nullable=True)
     notes = Column(String(255), nullable=True)
+    status = Column(String(20), nullable=False, default="planned", server_default="planned")

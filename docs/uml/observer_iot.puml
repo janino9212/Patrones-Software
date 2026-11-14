@@ -1,0 +1,66 @@
+@startuml observer_iot
+title Observer (iot): publicar cada lectura aceptada a los observadores suscritos
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Arial
+skinparam roundCorner 0
+skinparam class {
+  BackgroundColor #FDF3EE
+  BorderColor #444444
+  ArrowColor #444444
+}
+hide empty members
+
+class SensorReadingSubject <<Subject>> {
+  - _observers: tuple[SensorObserver, ...]
+  + attach(observer): None
+  + detach(observer): None
+  + notify(observation): None
+}
+
+abstract class SensorObserver <<Observer>> {
+  + {abstract} update(observation: SensorObservation): None
+}
+
+class LiveFeedObserver <<ConcreteObserver>> {
+  + update(observation): None
+  + recent(): tuple[SensorObservation, ...]
+}
+class ThresholdAlertObserver <<ConcreteObserver>> {
+  + update(observation): None
+  + alerts(): tuple[SensorAlert, ...]
+}
+class DeviceRegistryObserver <<ConcreteObserver>> {
+  + update(observation): None
+  + devices(): tuple[DeviceStatus, ...]
+}
+
+class SensorObservation {
+  + reading: SensorReading
+  + product_id: str
+  + stage: str
+  + received_at: datetime
+}
+
+class IngestSensorReadingUseCase <<Publisher>> {
+  + execute(vendor, product_id, stage, simulated_value)
+}
+
+class SensorMonitor {
+  + subject: SensorReadingSubject
+  + live_feed: LiveFeedObserver
+  + alerts: ThresholdAlertObserver
+  + devices: DeviceRegistryObserver
+}
+
+LiveFeedObserver -up-|> SensorObserver
+ThresholdAlertObserver -up-|> SensorObserver
+DeviceRegistryObserver -up-|> SensorObserver
+SensorReadingSubject o--> SensorObserver : notifica
+IngestSensorReadingUseCase --> SensorReadingSubject : notify(observation)
+SensorReadingSubject ..> SensorObservation
+SensorMonitor *--> SensorReadingSubject
+SensorMonitor ..> SensorObserver : suscribe los tres
+@enduml

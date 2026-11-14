@@ -1,0 +1,54 @@
+@startuml chain_of_responsibility_tracking
+title Chain of Responsibility (tracking): validar un evento eslabón por eslabón
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Arial
+skinparam roundCorner 0
+skinparam class {
+  BackgroundColor #FDF3EE
+  BorderColor #444444
+  ArrowColor #444444
+}
+hide empty members
+
+abstract class EventValidationHandler <<Handler>> {
+  - _next: EventValidationHandler | None
+  + set_next(handler): EventValidationHandler
+  + handle(request: EventValidationRequest): None
+  # {abstract} _check(request): None
+}
+
+class EventValidationRequest {
+  + event_type: str
+  + raw_data: Mapping
+}
+
+class RequiredFieldsHandler <<ConcreteHandler>>
+class NonBlankTextHandler <<ConcreteHandler>>
+class ProductIdentifierHandler <<ConcreteHandler>>
+class FiniteReadingHandler <<ConcreteHandler>>
+
+class RegisterTrackingEventUseCase <<Client>> {
+  - _validation_chain: EventValidationHandler
+  + execute_with_notification(event_type, raw_data)
+}
+
+class MissingFieldError <<Exception>>
+
+EventValidationHandler o--> EventValidationHandler : siguiente
+RequiredFieldsHandler -up-|> EventValidationHandler
+NonBlankTextHandler -up-|> EventValidationHandler
+ProductIdentifierHandler -up-|> EventValidationHandler
+FiniteReadingHandler -up-|> EventValidationHandler
+RegisterTrackingEventUseCase --> EventValidationHandler : handle(request)
+EventValidationHandler ..> EventValidationRequest
+RequiredFieldsHandler ..> MissingFieldError : lanza
+
+note bottom of RegisterTrackingEventUseCase
+  Orden: campos requeridos -> texto no vacío
+  -> identificador -> lectura finita.
+  El primer eslabón que falla corta la cadena.
+end note
+@enduml

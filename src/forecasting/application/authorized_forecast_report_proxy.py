@@ -35,7 +35,7 @@ class AuthorizedForecastReportProxy:
             logger.warning("[PROXY] Acceso denegado: falta el token")
             raise ForecastAccessDenied("Falta el token de acceso")
 
-        decoder = self._token_decoder or JWTManager().decode_token
+        decoder = self._token_decoder or JWTManager().decode_active_token
         try:
             payload = decoder(self._token)
         except ValueError as exc:

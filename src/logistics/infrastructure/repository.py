@@ -22,6 +22,7 @@ class SqlDistributionRouteRepository:
             stops=[dataclasses.asdict(stop) for stop in route.stops],
             total_distance_km=route.total_distance_km,
             notes=route.notes,
+            status=route.status,
         )
         self._db.add(model)
         self._db.commit()
@@ -40,6 +41,25 @@ class SqlDistributionRouteRepository:
         )
         return [self._to_domain(model) for model in models]
 
+    def update_status(
+        self, route_id: int, new_status: str, expected_status: str
+    ) -> DistributionRoute | None:
+        """UPDATE condicional: si dos peticiones compiten por la misma ruta,
+        solo la primera encuentra el estado esperado; la otra recibe None."""
+        updated_rows = (
+            self._db.query(DistributionRouteModel)
+            .filter(
+                DistributionRouteModel.id == route_id,
+                DistributionRouteModel.status == expected_status,
+            )
+            .update({DistributionRouteModel.status: new_status}, synchronize_session=False)
+        )
+        self._db.commit()
+        if updated_rows == 0:
+            return None
+        self._db.expire_all()
+        return self.get(route_id)
+
     @staticmethod
     def _to_domain(model: DistributionRouteModel) -> DistributionRoute:
         stops = tuple(RouteStop(**stop) for stop in model.stops)
@@ -50,4 +70,5 @@ class SqlDistributionRouteRepository:
             stops=stops,
             total_distance_km=model.total_distance_km,
             notes=model.notes,
+            status=model.status,
         )

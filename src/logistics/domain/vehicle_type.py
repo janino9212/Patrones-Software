@@ -36,5 +36,10 @@ class VehicleTypeFactory:
         return pooled if pooled is not None else VehicleType(code)
 
     @classmethod
+    def catalog(cls) -> tuple[VehicleType, ...]:
+        """Los flyweights del catálogo, para ofrecerlos en la interfaz."""
+        return tuple(cls._pool.values())
+
+    @classmethod
     def pool_size(cls) -> int:
         return len(cls._pool)

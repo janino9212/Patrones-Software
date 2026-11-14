@@ -1,0 +1,54 @@
+@startuml strategy_logistics
+title Strategy (logistics): algoritmos intercambiables para ordenar las paradas
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Arial
+skinparam roundCorner 0
+skinparam class {
+  BackgroundColor #FDF3EE
+  BorderColor #444444
+  ArrowColor #444444
+}
+hide empty members
+
+abstract class RouteOptimizationStrategy <<Strategy>> {
+  + name: str
+  + description: str
+  + {abstract} order(stops: Sequence[Location]): list[Location]
+}
+
+class KeepOrderStrategy <<ConcreteStrategy>> {
+  + order(stops): list[Location]
+}
+class NearestNeighborStrategy <<ConcreteStrategy>> {
+  + order(stops): list[Location]
+}
+class TwoOptStrategy <<ConcreteStrategy>> {
+  + order(stops): list[Location]
+}
+
+class RoutePlanner <<Context>> {
+  - _strategy: RouteOptimizationStrategy
+  + plan(stop_names): PlannedStops
+}
+
+class PlannedStops {
+  + strategy: str
+  + stop_names: tuple[str, ...]
+  + total_distance_km: float
+}
+
+class CreateDistributionRouteUseCase <<Client>> {
+  + execute(..., optimization: str): DistributionRoute
+}
+
+KeepOrderStrategy -up-|> RouteOptimizationStrategy
+NearestNeighborStrategy -up-|> RouteOptimizationStrategy
+TwoOptStrategy -up-|> RouteOptimizationStrategy
+RoutePlanner o--> RouteOptimizationStrategy : delega el orden
+RoutePlanner ..> PlannedStops : crea
+CreateDistributionRouteUseCase --> RoutePlanner : get_strategy(optimization)
+TwoOptStrategy ..> NearestNeighborStrategy : parte de su resultado
+@enduml
